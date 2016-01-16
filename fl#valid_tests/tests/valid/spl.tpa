@@ -6,7 +6,7 @@ BEGIN
   OUTER_SPRINT file_root "%MOD_FOLDER%/tests/valid/spl"
 
   ACTION_DEFINE_ASSOCIATIVE_ARRAY valid#spl BEGIN
-
+    "plain" => "Plain SPL created by NI"
   END
 
   ACTION_PHP_EACH valid#spl AS file => desc BEGIN

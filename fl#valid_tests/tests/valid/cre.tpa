@@ -6,7 +6,7 @@ BEGIN
   OUTER_SPRINT file_root "%MOD_FOLDER%/tests/valid/cre"
 
   ACTION_DEFINE_ASSOCIATIVE_ARRAY valid#cre BEGIN
-
+   "plain" => "Plain CRE created by NI"
   END
 
   ACTION_PHP_EACH valid#cre AS file => desc BEGIN

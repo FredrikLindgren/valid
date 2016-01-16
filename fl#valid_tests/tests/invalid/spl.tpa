@@ -6,7 +6,8 @@ BEGIN
   OUTER_SPRINT file_root "%MOD_FOLDER%/tests/invalid/spl"
 
   ACTION_DEFINE_ASSOCIATIVE_ARRAY invalid#spl BEGIN
-
+    "nosig" => "SPL with erased signature"
+    "nover" => "SPL with erased version"
   END
 
   ACTION_PHP_EACH invalid#spl AS file => desc BEGIN
