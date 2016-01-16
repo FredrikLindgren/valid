@@ -1,0 +1,8 @@
+PRINT "Testing known bad CRE structures"
+INCLUDE ~%MOD_FOLDER%/tests/invalid/cre.tpa~
+
+PRINT "Testing known bad ITM structures"
+INCLUDE ~%MOD_FOLDER%/tests/invalid/itm.tpa~
+
+PRINT "Testing known bad SPL structures"
+INCLUDE ~%MOD_FOLDER%/tests/invalid/spl.tpa~

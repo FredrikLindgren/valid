@@ -1,0 +1,8 @@
+PRINT "Testing known good CRE structures"
+INCLUDE ~%MOD_FOLDER%/tests/valid/cre.tpa~
+
+PRINT "Testing known good ITM structures"
+INCLUDE ~%MOD_FOLDER%/tests/valid/itm.tpa~
+
+PRINT "Testing known good SPL structures"
+INCLUDE ~%MOD_FOLDER%/tests/valid/spl.tpa~

@@ -1,0 +1,17 @@
+DEFINE_ACTION_FUNCTION fl#valid_tests#tests#valid#cre
+  RET
+    success
+    fail
+BEGIN
+  OUTER_SPRINT file_root "%MOD_FOLDER%/tests/valid/cre"
+
+  ACTION_DEFINE_ASSOCIATIVE_ARRAY valid#cre BEGIN
+
+  END
+
+  ACTION_PHP_EACH valid#cre AS file => desc BEGIN
+    LAF test_valid STR_VAR file = EVAL "%file_root%/%file%.cre" desc RET success fail END
+  END
+END
+
+LAF fl#valid_tests#tests#valid#cre RET success fail END

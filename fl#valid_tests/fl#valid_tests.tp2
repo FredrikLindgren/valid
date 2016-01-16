@@ -1,0 +1,67 @@
+BACKUP ~fl#valid_tests/backup~
+AUTHOR Wisp
+
+BEGIN ~Test suite for the fl#valid structure-validity library~
+
+INCLUDE ~%MOD_FOLDER%/fl#valid.tpa~
+
+OUTER_SET success = 0
+OUTER_SET fail = 0
+
+DEFINE_ACTION_FUNCTION test_valid
+  STR_VAR
+    file = ""
+    desc = ""
+  RET
+    success
+    fail
+BEGIN
+  ACTION_TRY
+    COPY - "%file%" ".../fl#valid_tests/%file%"
+      LPF fl#valid STR_VAR file RET valid END
+    ACTION_IF valid BEGIN
+      OUTER_SET ++success
+    END ELSE BEGIN
+      OUTER_SET ++fail
+      WARN "Validity test failed: %desc%"
+    END
+  WITH
+    DEFAULT
+      OUTER_SET ++fail
+      WARN "Validity test failed: %desc%"
+      WARN "Error caught: %ERROR_MESSAGE%"
+  END
+END
+
+DEFINE_ACTION_FUNCTION test_invalid
+  STR_VAR
+    file = ""
+    desc = ""
+  RET
+    success
+    fail
+BEGIN
+  ACTION_TRY
+    COPY - "%file%" ".../fl#valid_tests/%file%"
+      LPF fl#valid STR_VAR file RET valid END
+    ACTION_IF !valid BEGIN
+      OUTER_SET ++success
+    END ELSE BEGIN
+      OUTER_SET ++fail
+      WARN "Invalidity test failed: %desc%"
+    END
+  WITH
+    DEFAULT
+      OUTER_SET ++fail
+      WARN "Invalidity test failed: %desc%"
+      WARN "Error caught: %ERROR_MESSAGE%"
+  END
+END
+
+PRINT "Testing known good structures"
+INCLUDE ~%MOD_FOLDER%/tests/valid.tpa~
+
+PRINT "Testing known bad structures"
+INCLUDE ~%MOD_FOLDER%/tests/invalid.tpa~
+
+PRINT "Testing concluded%LNL%Successful tests: %success%%LNL%Failed tests: %fail%"
