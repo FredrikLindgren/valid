@@ -26,6 +26,8 @@
  * Public interface
  ********************************************************************/
 
+OUTER_SET fl#valid#silent = 0
+
 DEFINE_PATCH_FUNCTION fl#valid
   RET
     valid
@@ -41,18 +43,21 @@ BEGIN
     "%fl#null%"
     BEGIN
       valid = 0
-      PATCH_PRINT "WARNING: buffer is missing a signature"
+      LPF fl#valid#chat STR_VAR m = "WARNING: buffer is missing a signature" END
     END
 
     "0-byte file"
     BEGIN
       valid = 0
-      PATCH_PRINT "WARNING: buffer is empty"
+      LPF fl#valid#chat STR_VAR m = "WARNING: buffer is empty" END
     END
 
     DEFAULT
       valid = 1
-      PATCH_PRINT "fl#valid does not support buffers of type %signature%; no validation is done"
+      LPF fl#valid#chat
+        STR_VAR
+          m = "fl#valid does not support buffers of type %signature%; no validation is done"
+      END
   END
 END
 
@@ -85,6 +90,15 @@ DEFINE_PATCH_FUNCTION fl#valid#signature
 BEGIN
   READ_ASCII 0 signature ELSE "0-byte file" (4)
   READ_ASCII 4 version ELSE "0-byte file" (4)
+END
+
+DEFINE_PATCH_FUNCTION fl#valid#chat
+  STR_VAR
+    m = ""
+BEGIN
+  PATCH_IF !fl#valid#silent BEGIN
+    PATCH_PRINT "%m%"
+  END
 END
 
 /*********************************************************************
@@ -236,7 +250,10 @@ BEGIN
              "%version%" STRING_EQUAL "V9.0")
   BEGIN
     valid = 0
-    PATCH_PRINT "WARNING: expected creature buffer does not have a valid signature"
+    LPF fl#valid#chat
+      STR_VAR
+        m = "WARNING: expected creature buffer does not have a valid signature"
+    END
   END ELSE valid = 1
 END
 
@@ -250,25 +267,37 @@ BEGIN
     "V1.0" WHEN BUFFER_LENGTH < fl#valid#cre#v10#header_length
     BEGIN
       valid = 0
-      PATCH_PRINT "WARNING: creature buffer V1.0 is less than required minimum size"
+      LPF fl#valid#chat
+        STR_VAR
+          m = "WARNING: creature buffer V1.0 is less than required minimum size"
+      END
     END
 
     "V1.2" WHEN BUFFER_LENGTH < fl#valid#cre#v12#header_length
     BEGIN
       valid = 0
-      PATCH_PRINT "WARNING: creature buffer V1.2 is less than required minimum size"
+      LPF fl#valid#chat
+        STR_VAR
+          m = "WARNING: creature buffer V1.2 is less than required minimum size"
+      END
     END
 
     "V2.2" WHEN BUFFER_LENGTH < fl#valid#cre#v22#header_length
     BEGIN
       valid = 0
-      PATCH_PRINT "WARNING: creature buffer V2.2 is less than required minimum size"
+      LPF fl#valid#chat
+        STR_VAR
+          m = "WARNING: creature buffer V2.2 is less than required minimum size"
+      END
     END
 
     "V9.0" WHEN BUFFER_LENGTH < fl#valid#cre#v90#header_length
     BEGIN
       valid = 0
-      PATCH_PRINT "WARNING: creature buffer V9.0 is less than required minimum size"
+      LPF fl#valid#chat
+        STR_VAR
+          m = "WARNING: creature buffer V9.0 is less than required minimum size"
+      END
     END
 
     DEFAULT
@@ -290,7 +319,10 @@ BEGIN
     READ_LONG count_offset count
     PATCH_IF start < header_length BEGIN
       valid = 0
-      PATCH_PRINT "WARNING: creature buffer has structure-start offset pointing into header"
+      LPF fl#valid#chat
+        STR_VAR
+          m = "WARNING: creature buffer has structure-start offset pointing into header"
+      END
     END
   END
 END
@@ -389,7 +421,7 @@ BEGIN
              "%version%" STRING_EQUAL "V2.0")
   BEGIN
     valid = 0
-    PATCH_PRINT "WARNING: expected item buffer does not have a valid signature"
+    LPF fl#valid#chat STR_VAR m = "WARNING: expected item buffer does not have a valid signature" END
   END ELSE valid = 1
 END
 
@@ -403,19 +435,19 @@ BEGIN
     "V1  " WHEN BUFFER_LENGTH < fl#valid#itm#v1#header_length
     BEGIN
       valid  = 0
-      PATCH_PRINT "WARNING: item buffer V1 is less than required minimum size"
+      LPF fl#valid#chat STR_VAR m = "WARNING: item buffer V1 is less than required minimum size" END
     END
 
     "V1.1" WHEN BUFFER_LENGTH < fl#valid#itm#v11#header_length
     BEGIN
       valid  = 0
-      PATCH_PRINT "WARNING: item buffer V1.1 is less than required minimum size"
+      LPF fl#valid#chat STR_VAR m = "WARNING: item buffer V1.1 is less than required minimum size" END
     END
 
     "V2.0" WHEN BUFFER_LENGTH < fl#valid#itm#v20#header_length
     BEGIN
       valid = 0
-      PATCH_PRINT "WARNING: item buffer V2.0 is less than required minimum size"
+      LPF fl#valid#chat STR_VAR m = "WARNING: item buffer V2.0 is less than required minimum size" END
     END
 
     DEFAULT
@@ -455,7 +487,7 @@ BEGIN
              "%version%" STRING_EQUAL "V2.0")
   BEGIN
     valid = 0
-    PATCH_PRINT "WARNING: expected spell buffer does not have a valid signature"
+    LPF fl#valid#chat STR_VAR m = "WARNING: expected spell buffer does not have a valid signature" END
   END ELSE valid = 1
 END
 
@@ -469,13 +501,13 @@ BEGIN
     "V1  " WHEN BUFFER_LENGTH < fl#valid#spl#v1#header_length
     BEGIN
       valid = 0
-      PATCH_PRINT "WARNING: spell buffer V1 is less than required minimum size"
+      LPF fl#valid#chat STR_VAR m = "WARNING: spell buffer V1 is less than required minimum size" END
     END
 
     "V2.0" WHEN BUFFER_LENGTH < fl#valid#spl#v20#header_length
     BEGIN
       valid = 0
-      PATCH_PRINT "WARNING: spell buffer V2.0 is less than required minimum size"
+      LPF fl#valid#chat STR_VAR m = "WARNING: spell buffer V2.0 is less than required minimum size" END
     END
 
     DEFAULT
