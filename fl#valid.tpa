@@ -34,6 +34,10 @@ BEGIN
   PATCH_MATCH "%signature%" WITH
     "CRE " BEGIN LPF fl#valid#cre RET valid END END
 
+    "ITM " BEGIN LPF fl#valid#itm RET valid END END
+
+    "SPL " BEGIN LPF fl#valid#spl RET valid END END
+
     DEFAULT
       PATCH_PRINT "fl#valid does not support buffers of type %signature%"
   END
@@ -64,6 +68,10 @@ BEGIN
   READ_ASCII 0 signature ELSE "0-byte file" (4)
   READ_ASCII 4 version ELSE "0-byte file" (4)
 END
+
+/*********************************************************************
+ * CRE
+ ********************************************************************/
 
 /*
  * Determines if the current buffer is a valid creature.
@@ -326,5 +334,133 @@ BEGIN
     END
 
     DEFAULT
+  END
+END
+
+/*********************************************************************
+ * ITM
+ ********************************************************************/
+
+/*
+ * Determines if the current buffer is a valid item.
+ * Return boolean valid
+ */
+DEFINE_PATCH_FUNCTION fl#valid#itm
+  RET
+    valid
+BEGIN
+  LPF fl#valid#itm#signature RET valid version END
+  PATCH_IF valid BEGIN
+    LPF fl#valid#itm#size STR_VAR version RET valid END
+  END
+END
+
+OUTER_SET fl#valid#itm#v1#header_length = 0x72
+OUTER_SET fl#valid#itm#v11#header_length = 0x9a
+OUTER_SET fl#valid#itm#v20#header_length = 0x82
+
+DEFINE_PATCH_FUNCTION fl#valid#itm#signature
+  RET
+    valid
+    version
+BEGIN
+  LPF fl#valid#signature RET signature version END
+  PATCH_IF "%signature%" STR_CMP "ITM " OR
+           !("%version%" STRING_EQUAL "V1  " OR
+             "%version%" STRING_EQUAL "V1.1" OR
+             "%version%" STRING_EQUAL "V2.0")
+  BEGIN
+    valid = 0
+    PATCH_WARN "WARNING: expected item buffer does not have a valid signature"
+  END ELSE valid = 1
+END
+
+DEFINE_PATCH_FUNCTION fl#valid#itm#size
+  STR_VAR
+    version = ""
+  RET
+    valid
+BEGIN
+  PATCH_MATCH "%version%" WITH
+    "V1  " WHEN BUFFER_LENGTH < fl#valid#itm#v1#header_length
+    BEGIN
+      valid  = 0
+      PATCH_WARN "WARNING: item buffer V1 is less than required minimum size"
+    END
+
+    "V1.1" WHEN BUFFER_LENGTH < fl#valid#itm#v11#header_length
+    BEGIN
+      valid  = 0
+      PATCH_WARN "WARNING: item buffer V1.1 is less than required minimum size"
+    END
+
+    "V2.0" WHEN BUFFER_LENGTH < fl#valid#itm#v20#header_length
+    BEGIN
+      valid = 0
+      PATCH_WARN "WARNING: item buffer V2.0 is less than required minimum size"
+    END
+
+    DEFAULT
+      valid = 1
+  END
+END
+
+/*********************************************************************
+ * SPL
+ ********************************************************************/
+
+/*
+ * Determines if the current buffer is a valid spell.
+ * Return boolean valid
+ */
+DEFINE_PATCH_FUNCTION fl#valid#spl
+  RET
+    valid
+BEGIN
+  LPF fl#valid#spl#signature RET valid version END
+  PATCH_IF valid BEGIN
+    LPF fl#valid#spl#size STR_VAR version RET valid END
+  END
+END
+
+OUTER_SET fl#valid#spl#v1#header_length = 0x72
+OUTER_SET fl#valid#spl#v20#header_length = 0x82
+
+DEFINE_PATCH_FUNCTION fl#valid#spl#signature
+  RET
+    valid
+    version
+BEGIN
+  LPF fl#valid#signature RET signature version END
+  PATCH_IF "%signature%" STR_CMP "SPL " OR
+           !("%version%" STRING_EQUAL "V1  " OR
+             "%version%" STRING_EQUAL "V2.0")
+  BEGIN
+    valid = 0
+    PATCH_WARN "WARNING: expected spell buffer does not have a valid signature"
+  END ELSE valid = 1
+END
+
+DEFINE_PATCH_FUNCTION fl#valid#spl#size
+  STR_VAR
+    version = ""
+  RET
+    valid
+BEGIN
+  PATCH_MATCH "%version%" WITH
+    "V1  " WHEN BUFFER_LENGTH < fl#valid#spl#v1#header_length
+    BEGIN
+      valid = 0
+      PATCH_WARN "WARNING: spell buffer V1 is less than required minimum size"
+    END
+
+    "V2.0" WHEN BUFFER_LENGTH < fl#valid#spl#v20#header_length
+    BEGIN
+      valid = 0
+      PATCH_WARN "WARNING: spell buffer V2.0 is less than required minimum size"
+    END
+
+    DEFAULT
+      valid = 1
   END
 END
