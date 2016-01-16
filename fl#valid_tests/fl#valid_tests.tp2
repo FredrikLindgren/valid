@@ -5,6 +5,8 @@ BEGIN ~Test suite for the fl#valid structure-validity library~
 
 INCLUDE ~%MOD_FOLDER%/fl#valid.tpa~
 
+OUTER_SET fl#valid#silent = 0
+
 OUTER_SET success = 0
 OUTER_SET fail = 0
 
