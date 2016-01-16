@@ -32,6 +32,7 @@ DEFINE_PATCH_FUNCTION fl#valid
 BEGIN
   LPF fl#valid#signature RET signature END
   PATCH_MATCH "%signature%" WITH
+    "CRE " BEGIN LPF fl#valid#cre RET valid END END
 
     DEFAULT
       PATCH_PRINT "fl#valid does not support buffers of type %signature%"
@@ -62,4 +63,268 @@ DEFINE_PATCH_FUNCTION fl#valid#signature
 BEGIN
   READ_ASCII 0 signature ELSE "0-byte file" (4)
   READ_ASCII 4 version ELSE "0-byte file" (4)
+END
+
+/*
+ * Determines if the current buffer is a valid creature.
+ * Return boolean valid
+ */
+DEFINE_PATCH_FUNCTION fl#valid#cre
+  RET
+    valid
+BEGIN
+  LPF fl#valid#cre#signature RET valid version END
+  PATCH_IF valid BEGIN
+    LPF fl#valid#cre#size STR_VAR version RET valid END
+    PATCH_IF valid BEGIN
+      LPF fl#valid#cre#offsets STR_VAR version RET valid END
+    END
+  END
+END
+
+OUTER_SET fl#valid#cre#v10#header_length = 0x2d4
+OUTER_SET fl#valid#cre#v12#header_length = 0x378
+OUTER_SET fl#valid#cre#v22#header_length = 0x62e
+OUTER_SET fl#valid#cre#v90#header_length = 0x33c
+
+ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid#cre#v10#offsets BEGIN
+  0x2a0 => 0x2a4
+  0x2a8 => 0x2ac
+  0x2b0 => 0x2b4
+  0x2b8 => 0x2c0
+  0x2bc => 0x2c0
+  0x2c4 => 0x2c8
+END
+
+ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid#cre#v12#offsets BEGIN
+  0x344 => 0x348
+  0x34c => 0x350
+  0x354 => 0x358
+  0x35c => 0x364
+  0x360 => 0x364
+  0x368 => 0x36c
+END
+
+ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid#cre#v22#offsets BEGIN
+  0x3ba => 0x4b6
+  0x3be => 0x4ba
+  0x3c2 => 0x4be
+  0x3c6 => 0x4c2
+  0x3ca => 0x4c6
+  0x3ce => 0x4ca
+  0x3d2 => 0x4ce
+  0x3d6 => 0x4d2
+  0x3da => 0x4d6
+  0x3de => 0x4da
+  0x3e2 => 0x4de
+  0x3e6 => 0x4e2
+  0x3ea => 0x4e6
+  0x3ee => 0x4ea
+  0x3f2 => 0x4ee
+  0x3f6 => 0x4f2
+  0x3fa => 0x4f6
+  0x3fe => 0x4fa
+  0x402 => 0x4fe
+  0x406 => 0x502
+  0x40a => 0x506
+  0x40e => 0x50a
+  0x412 => 0x50e
+  0x416 => 0x512
+  0x41a => 0x516
+  0x41e => 0x51a
+  0x422 => 0x51e
+  0x426 => 0x522
+  0x42a => 0x526
+  0x42e => 0x52a
+  0x432 => 0x52e
+  0x436 => 0x532
+  0x43a => 0x536
+  0x43e => 0x53a
+  0x442 => 0x53e
+  0x446 => 0x542
+  0x44a => 0x546
+  0x44e => 0x54a
+  0x452 => 0x54e
+  0x456 => 0x552
+  0x45a => 0x556
+  0x45e => 0x55a
+  0x462 => 0x55e
+  0x466 => 0x562
+  0x46a => 0x566
+  0x46e => 0x56a
+  0x472 => 0x56e
+  0x476 => 0x572
+  0x47a => 0x576
+  0x47e => 0x57a
+  0x482 => 0x57e
+  0x486 => 0x582
+  0x48a => 0x586
+  0x48e => 0x58a
+  0x492 => 0x58e
+  0x496 => 0x592
+  0x49a => 0x596
+  0x49e => 0x59a
+  0x4a2 => 0x59e
+  0x4a6 => 0x5a2
+  0x4aa => 0x5a6
+  0x4ae => 0x5aa
+
+  0x4b2 => 0x5ae
+  0x5b2 => 0x5d6
+  0x5b6 => 0x5da
+  0x5ba => 0x5de
+  0x5be => 0x5e2
+  0x5c2 => 0x5e6
+  0x5c6 => 0x5ea
+  0x5ca => 0x5ee
+  0x5ce => 0x5f2
+  0x5d2 => 0x5f6
+
+  0x5fa => 0x5fe
+  0x602 => 0x606
+  0x60a => 0x60e
+  0x612 => 0x61a
+  0x616 => 0x61a
+  0x61e => 0x622
+END
+
+ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid#cre#v90#offsets BEGIN
+  0x308 => 0x30c
+  0x310 => 0x314
+  0x318 => 0x31c
+  0x320 => 0x328
+  0x324 => 0x324
+  0x32c => 0x330
+END
+
+DEFINE_PATCH_FUNCTION fl#valid#cre#signature
+  RET
+    valid
+    version
+BEGIN
+  LPF fl#valid#signature RET signature version END
+  PATCH_IF "%signature%" STR_CMP "CRE " OR
+           !("%version%" STRING_EQUAL "V1.0" OR
+             "%version%" STRING_EQUAL "V1.2" OR
+             "%version%" STRING_EQUAL "V2.2" OR
+             "%version%" STRING_EQUAL "V9.0")
+  BEGIN
+    valid = 0
+    PATCH_WARN "WARNING: expected creature buffer does not have a valid signature"
+  END ELSE valid = 1
+END
+
+DEFINE_PATCH_FUNCTION fl#valid#cre#size
+  STR_VAR
+    version = ""
+  RET
+    valid
+BEGIN
+  PATCH_MATCH "%version%" WITH
+    "V1.0" WHEN BUFFER_LENGTH < fl#valid#cre#v10#header_length
+    BEGIN
+      valid = 0
+      PATCH_WARN "WARNING: creature buffer V1.0 is less than required minimum size"
+    END
+
+    "V1.2" WHEN BUFFER_LENGTH < fl#valid#cre#v12#header_length
+    BEGIN
+      valid = 0
+      PATCH_WARN "WARNING: creature buffer V1.2 is less than required minimum size"
+    END
+
+    "V2.2" WHEN BUFFER_LENGTH < fl#valid#cre#v22#header_length
+    BEGIN
+      valid = 0
+      PATCH_WARN "WARNING: creature buffer V2.2 is less than required minimum size"
+    END
+
+    "V9.0" WHEN BUFFER_LENGTH < fl#valid#cre#v90#header_length
+    BEGIN
+      valid = 0
+      PATCH_WARN "WARNING: creature buffer V9.0 is less than required minimum size"
+    END
+
+    DEFAULT
+      valid = 1
+  END
+END
+
+DEFINE_PATCH_FUNCTION fl#valid#cre#offsets#check
+  INT_VAR
+    header_length = 0
+  STR_VAR
+    offset_array = ""
+  RET
+    valid
+BEGIN
+  valid = 1
+  PHP_EACH "%offset_array%" AS start_offset => count_offset BEGIN
+    READ_LONG start_offset start
+    READ_LONG count_offset count
+    PATCH_IF start < header_length BEGIN
+      valid = 0
+      PATCH_WARN "WARNING: creature buffer has structure-start offset pointing into header"
+    END
+  END
+END
+
+DEFINE_PATCH_FUNCTION fl#valid#cre#offsets
+  STR_VAR
+    version = ""
+  RET
+    valid
+BEGIN
+  valid = 1
+  PATCH_MATCH "%version%" WITH
+    "V1.0"
+    BEGIN
+      LPF fl#valid#cre#offsets#check
+        INT_VAR
+          header_length = fl#valid#cre#v10#header_length
+        STR_VAR
+          offset_array = fl#valid#cre#v10#offsets
+        RET
+          valid
+      END
+    END
+
+    "V1.2"
+    BEGIN
+      LPF fl#valid#cre#offsets#check
+        INT_VAR
+          header_length = fl#valid#cre#v12#header_length
+        STR_VAR
+          offset_array = fl#valid#cre#v12#offsets
+        RET
+          valid
+      END
+    END
+
+    "V2.2"
+    BEGIN
+      LPF fl#valid#cre#offsets#check
+        INT_VAR
+          header_length = fl#valid#cre#v22#header_length
+        STR_VAR
+          offset_array = fl#valid#cre#v22#offsets
+        RET
+          valid
+      END
+    END
+
+    "V9.0"
+    BEGIN
+      LPF fl#valid#cre#offsets#check
+        INT_VAR
+          header_length = fl#valid#cre#v90#header_length
+        STR_VAR
+          offset_array = fl#valid#cre#v90#offsets
+        RET
+          valid
+      END
+    END
+
+    DEFAULT
+  END
 END
