@@ -26,7 +26,40 @@
  * Public interface
  ********************************************************************/
 
+DEFINE_PATCH_FUNCTION fl#valid
+  RET
+    valid
+BEGIN
+  LPF fl#valid#signature RET signature END
+  PATCH_MATCH "%signature%" WITH
+
+    DEFAULT
+      PATCH_PRINT "fl#valid does not support buffers of type %signature%"
+  END
+END
+
+DEFINE_ACTION_FUNCTION fl#valid
+  STR_VAR
+    file = ""
+  RET
+    valid
+BEGIN
+  ACTION_IF "%file%" STR_CMP "" AND FILE_EXISTS_IN_GAME "%file%" BEGIN
+    COPY_EXISTING "%file%" override
+      LPF fl#valid RET valid END
+    BUT_ONLY
+  END ELSE WARN "WARNING: fl#valid cannot determine validity of non-existent file %file%"
+END
 
 /*********************************************************************
  * Private interface
  ********************************************************************/
+
+DEFINE_PATCH_FUNCTION fl#valid#signature
+  RET
+    signature
+    version
+BEGIN
+  READ_ASCII 0 signature ELSE "0-byte file" (4)
+  READ_ASCII 4 version ELSE "0-byte file" (4)
+END
