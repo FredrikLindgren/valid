@@ -38,8 +38,21 @@ BEGIN
 
     "SPL " BEGIN LPF fl#valid#spl RET valid END END
 
+    "%fl#null%"
+    BEGIN
+      valid = 0
+      PATCH_WARN "WARNING: buffer is missing a signature"
+    END
+
+    "0-byte file"
+    BEGIN
+      valid = 0
+      PATCH_WARN "WARNING: buffer is empty"
+    END
+
     DEFAULT
-      PATCH_PRINT "fl#valid does not support buffers of type %signature%"
+      valid = 1
+      PATCH_PRINT "fl#valid does not support buffers of type %signature%; no validation is done"
   END
 END
 
@@ -59,6 +72,11 @@ END
 /*********************************************************************
  * Private interface
  ********************************************************************/
+
+OUTER_INNER_PATCH fl#valid#null BEGIN
+  WRITE_ASCII 0 "" #4
+  READ_ASCII 0 fl#null (4)
+END
 
 DEFINE_PATCH_FUNCTION fl#valid#signature
   RET
