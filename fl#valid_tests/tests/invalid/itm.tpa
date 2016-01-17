@@ -8,6 +8,7 @@ BEGIN
   ACTION_DEFINE_ASSOCIATIVE_ARRAY invalid#itm BEGIN
     "nosig" => "ITM with erased signature"
     "nover" => "ITM with erased version"
+    "dmghd" => "ITM with damaged header"
   END
 
   ACTION_PHP_EACH invalid#itm AS file => desc BEGIN
