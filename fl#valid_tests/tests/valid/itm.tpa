@@ -6,7 +6,9 @@ BEGIN
   OUTER_SPRINT file_root "%MOD_FOLDER%/tests/valid/itm"
 
   ACTION_DEFINE_ASSOCIATIVE_ARRAY valid#itm BEGIN
-    "plain" => "Plain ITM created by NI"
+    "itmv1" => "Plain ITM V1 created by NI v1.36-20151216"
+    "itmv11" => "Plain ITM V1.1 created by WeiDU 238.02"
+    "itmv20" => "Plain ITM V2.0 created by WeiDU 238.02"
   END
 
   ACTION_PHP_EACH valid#itm AS file => desc BEGIN

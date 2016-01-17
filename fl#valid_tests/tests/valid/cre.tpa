@@ -6,7 +6,10 @@ BEGIN
   OUTER_SPRINT file_root "%MOD_FOLDER%/tests/valid/cre"
 
   ACTION_DEFINE_ASSOCIATIVE_ARRAY valid#cre BEGIN
-   "plain" => "Plain CRE created by NI"
+   "crev10" => "Plain CRE V1.0 created by NI v1.36-20151216"
+   "crev12" => "Plain CRE V1.2 created by WeiDU 238.02"
+   "crev22" => "Plain CRE V2.2 created by WeiDU 238.02"
+   "crev90" => "Plain CRE V9.0 created by WeiDU 238.02"
   END
 
   ACTION_PHP_EACH valid#cre AS file => desc BEGIN

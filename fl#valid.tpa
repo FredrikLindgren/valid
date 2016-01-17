@@ -124,6 +124,11 @@ BEGIN
   END
 END
 
+OUTER_SPRINT fl#valid#cre#v10 "V1.0"
+OUTER_SPRINT fl#valid#cre#v12 "V1.2"
+OUTER_SPRINT fl#valid#cre#v22 "V2.2"
+OUTER_SPRINT fl#valid#cre#v90 "V9.0"
+
 OUTER_SET fl#valid#cre#v10#header_length = 0x2d4
 OUTER_SET fl#valid#cre#v12#header_length = 0x378
 OUTER_SET fl#valid#cre#v22#header_length = 0x62e
@@ -246,10 +251,10 @@ DEFINE_PATCH_FUNCTION fl#valid#cre#signature
 BEGIN
   LPF fl#valid#signature RET signature version END
   PATCH_IF "%signature%" STR_CMP "CRE " OR
-           !("%version%" STRING_EQUAL "V1.0" OR
-             "%version%" STRING_EQUAL "V1.2" OR
-             "%version%" STRING_EQUAL "V2.2" OR
-             "%version%" STRING_EQUAL "V9.0")
+           !("%version%" STRING_EQUAL "%fl#valid#cre#v10%" OR
+             "%version%" STRING_EQUAL "%fl#valid#cre#v12%" OR
+             "%version%" STRING_EQUAL "%fl#valid#cre#v22%" OR
+             "%version%" STRING_EQUAL "%fl#valid#cre#v90%")
   BEGIN
     valid = 0
     LPF fl#valid#chat
@@ -266,7 +271,7 @@ DEFINE_PATCH_FUNCTION fl#valid#cre#size
     valid
 BEGIN
   PATCH_MATCH "%version%" WITH
-    "V1.0" WHEN BUFFER_LENGTH < fl#valid#cre#v10#header_length
+    "%fl#valid#cre#v10%" WHEN BUFFER_LENGTH < fl#valid#cre#v10#header_length
     BEGIN
       valid = 0
       LPF fl#valid#chat
@@ -275,7 +280,7 @@ BEGIN
       END
     END
 
-    "V1.2" WHEN BUFFER_LENGTH < fl#valid#cre#v12#header_length
+    "%fl#valid#cre#v12%" WHEN BUFFER_LENGTH < fl#valid#cre#v12#header_length
     BEGIN
       valid = 0
       LPF fl#valid#chat
@@ -284,7 +289,7 @@ BEGIN
       END
     END
 
-    "V2.2" WHEN BUFFER_LENGTH < fl#valid#cre#v22#header_length
+    "%fl#valid#cre#v22%" WHEN BUFFER_LENGTH < fl#valid#cre#v22#header_length
     BEGIN
       valid = 0
       LPF fl#valid#chat
@@ -293,7 +298,7 @@ BEGIN
       END
     END
 
-    "V9.0" WHEN BUFFER_LENGTH < fl#valid#cre#v90#header_length
+    "%fl#valid#cre#v90%" WHEN BUFFER_LENGTH < fl#valid#cre#v90#header_length
     BEGIN
       valid = 0
       LPF fl#valid#chat
@@ -337,7 +342,7 @@ DEFINE_PATCH_FUNCTION fl#valid#cre#offsets
 BEGIN
   valid = 1
   PATCH_MATCH "%version%" WITH
-    "V1.0"
+    "%fl#valid#cre#v10%"
     BEGIN
       LPF fl#valid#cre#offsets#check
         INT_VAR
@@ -349,7 +354,7 @@ BEGIN
       END
     END
 
-    "V1.2"
+    "%fl#valid#cre#v12%"
     BEGIN
       LPF fl#valid#cre#offsets#check
         INT_VAR
@@ -361,7 +366,7 @@ BEGIN
       END
     END
 
-    "V2.2"
+    "%fl#valid#cre#v22%"
     BEGIN
       LPF fl#valid#cre#offsets#check
         INT_VAR
@@ -373,7 +378,7 @@ BEGIN
       END
     END
 
-    "V9.0"
+    "%fl#valid#cre#v90%"
     BEGIN
       LPF fl#valid#cre#offsets#check
         INT_VAR
@@ -412,6 +417,10 @@ BEGIN
   END
 END
 
+OUTER_SPRINT fl#valid#itm#v1 "V1  "
+OUTER_SPRINT fl#valid#itm#v11 "V1.1"
+OUTER_SPRINT fl#valid#itm#v20 "V2.0"
+
 OUTER_SET fl#valid#itm#v1#header_length = 0x72
 OUTER_SET fl#valid#itm#v11#header_length = 0x9a
 OUTER_SET fl#valid#itm#v20#header_length = 0x82
@@ -438,9 +447,9 @@ DEFINE_PATCH_FUNCTION fl#valid#itm#signature
 BEGIN
   LPF fl#valid#signature RET signature version END
   PATCH_IF "%signature%" STR_CMP "ITM " OR
-           !("%version%" STRING_EQUAL "V1  " OR
-             "%version%" STRING_EQUAL "V1.1" OR
-             "%version%" STRING_EQUAL "V2.0")
+           !("%version%" STRING_EQUAL "%fl#valid#itm#v1%" OR
+             "%version%" STRING_EQUAL "%fl#valid#itm#v11%" OR
+             "%version%" STRING_EQUAL "%fl#valid#itm#v20%")
   BEGIN
     valid = 0
     LPF fl#valid#chat STR_VAR m = "WARNING: expected item buffer does not have a valid signature" END
@@ -454,19 +463,19 @@ DEFINE_PATCH_FUNCTION fl#valid#itm#size
     valid
 BEGIN
   PATCH_MATCH "%version%" WITH
-    "V1  " WHEN BUFFER_LENGTH < fl#valid#itm#v1#header_length
+    "%fl#valid#itm#v1%" WHEN BUFFER_LENGTH < fl#valid#itm#v1#header_length
     BEGIN
       valid  = 0
       LPF fl#valid#chat STR_VAR m = "WARNING: item buffer V1 is less than required minimum size" END
     END
 
-    "V1.1" WHEN BUFFER_LENGTH < fl#valid#itm#v11#header_length
+    "%fl#valid#itm#v11%" WHEN BUFFER_LENGTH < fl#valid#itm#v11#header_length
     BEGIN
       valid  = 0
       LPF fl#valid#chat STR_VAR m = "WARNING: item buffer V1.1 is less than required minimum size" END
     END
 
-    "V2.0" WHEN BUFFER_LENGTH < fl#valid#itm#v20#header_length
+    "%fl#valid#itm#v20%" WHEN BUFFER_LENGTH < fl#valid#itm#v20#header_length
     BEGIN
       valid = 0
       LPF fl#valid#chat STR_VAR m = "WARNING: item buffer V2.0 is less than required minimum size" END
@@ -507,7 +516,7 @@ DEFINE_PATCH_FUNCTION fl#valid#itm#offsets
 BEGIN
   valid = 1
   PATCH_MATCH "%version%" WITH
-    "V1  "
+    "%fl#valid#itm#v1%"
     BEGIN
       LPF fl#valid#itm#offsets#check
         INT_VAR
@@ -519,7 +528,7 @@ BEGIN
       END
     END
 
-    "V1.1"
+    "%fl#valid#itm#v11%"
     BEGIN
       LPF fl#valid#itm#offsets#check
         INT_VAR
@@ -531,7 +540,7 @@ BEGIN
       END
     END
 
-    "V2.0"
+    "%fl#valid#itm#v20%"
     BEGIN
       LPF fl#valid#itm#offsets#check
         INT_VAR
@@ -570,6 +579,9 @@ BEGIN
   END
 END
 
+OUTER_SPRINT fl#valid#spl#v1 "V1  "
+OUTER_SPRINT fl#valid#spl#v20 "V2.0"
+
 OUTER_SET fl#valid#spl#v1#header_length = 0x72
 OUTER_SET fl#valid#spl#v20#header_length = 0x82
 
@@ -590,8 +602,8 @@ DEFINE_PATCH_FUNCTION fl#valid#spl#signature
 BEGIN
   LPF fl#valid#signature RET signature version END
   PATCH_IF "%signature%" STR_CMP "SPL " OR
-           !("%version%" STRING_EQUAL "V1  " OR
-             "%version%" STRING_EQUAL "V2.0")
+           !("%version%" STRING_EQUAL "%fl#valid#spl#v1%" OR
+             "%version%" STRING_EQUAL "%fl#valid#spl#v20%")
   BEGIN
     valid = 0
     LPF fl#valid#chat STR_VAR m = "WARNING: expected spell buffer does not have a valid signature" END
@@ -605,13 +617,13 @@ DEFINE_PATCH_FUNCTION fl#valid#spl#size
     valid
 BEGIN
   PATCH_MATCH "%version%" WITH
-    "V1  " WHEN BUFFER_LENGTH < fl#valid#spl#v1#header_length
+    "%fl#valid#spl#v1%" WHEN BUFFER_LENGTH < fl#valid#spl#v1#header_length
     BEGIN
       valid = 0
       LPF fl#valid#chat STR_VAR m = "WARNING: spell buffer V1 is less than required minimum size" END
     END
 
-    "V2.0" WHEN BUFFER_LENGTH < fl#valid#spl#v20#header_length
+    "%fl#valid#spl#v20%" WHEN BUFFER_LENGTH < fl#valid#spl#v20#header_length
     BEGIN
       valid = 0
       LPF fl#valid#chat STR_VAR m = "WARNING: spell buffer V2.0 is less than required minimum size" END
@@ -652,7 +664,7 @@ DEFINE_PATCH_FUNCTION fl#valid#spl#offsets
 BEGIN
   valid = 1
   PATCH_MATCH "%version%" WITH
-    "V1  "
+    "%fl#valid#spl#v1%"
     BEGIN
       LPF fl#valid#spl#offsets#check
         INT_VAR
@@ -664,7 +676,7 @@ BEGIN
       END
     END
 
-    "V2.0"
+    "%fl#valid#spl#v20%"
     BEGIN
       LPF fl#valid#spl#offsets#check
         INT_VAR
