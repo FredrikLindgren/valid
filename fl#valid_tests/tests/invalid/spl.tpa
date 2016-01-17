@@ -6,11 +6,11 @@ BEGIN
   OUTER_SPRINT file_root "%MOD_FOLDER%/tests/invalid/spl"
 
   ACTION_DEFINE_ASSOCIATIVE_ARRAY invalid#spl BEGIN
-    "nosig" => "SPL with erased signature"
-    "nover" => "SPL with erased version"
-    "splv10" => "SPL with incorrect V1.0 version"
-    "dmghd" => "SPL with damaged header"
-    "wrngoff" => "Plain SPL with 0x30 deducted off the effect offset"
+    "nosig" => "Plain SPL V1 with erased signature"
+    "nover" => "Plain SPL V1 with erased version"
+    "splv10" => "Plain SPL with incorrect V1.0 version"
+    "dmghd" => "Plain SPL V1 with 0x20 bytes deleted at offset 0x10"
+    "wrngoff" => "Plain SPL V1 with 0x30 deducted off the effect offset"
   END
 
   ACTION_PHP_EACH invalid#spl AS file => desc BEGIN

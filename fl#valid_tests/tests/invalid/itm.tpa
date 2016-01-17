@@ -6,11 +6,11 @@ BEGIN
   OUTER_SPRINT file_root "%MOD_FOLDER%/tests/invalid/itm"
 
   ACTION_DEFINE_ASSOCIATIVE_ARRAY invalid#itm BEGIN
-    "nosig" => "ITM with erased signature"
-    "nover" => "ITM with erased version"
-    "itmv10" => "ITM with incorrect V1.0 version"
-    "dmghd" => "ITM with damaged header"
-    "0off" => "Plain ITM with zeroed ability offset"
+    "nosig" => "Plain ITM V1 with erased signature"
+    "nover" => "Plain ITM V1 with erased version"
+    "itmv10" => "Plain ITM with incorrect V1.0 version"
+    "dmghd" => "Plain ITM V1 with 0x20 bytes deleted at offset 0x10"
+    "0off" => "Plain ITM V1 with zeroed ability offset"
   END
 
   ACTION_PHP_EACH invalid#itm AS file => desc BEGIN

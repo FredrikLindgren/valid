@@ -6,12 +6,12 @@ BEGIN
   OUTER_SPRINT file_root "%MOD_FOLDER%/tests/invalid/cre"
 
   ACTION_DEFINE_ASSOCIATIVE_ARRAY invalid#cre BEGIN
-    "nosig" => "CRE with erased signature"
-    "null"  => "file of zero length"
-    "nover" => "CRE with erased version"
-    "dmghd" => "CRE with damaged header"
-    "0off"  => "CRE with zeroed offset and 0 corresponing structures"
-    "wrngoff" => "CRE with offset pointing into header and 0 corresponding structures"
+    "nosig" => "Plain CRE V1.0 with erased signature and version"
+    "null"  => "File of zero length"
+    "nover" => "Plain CRE V1.0 with erased version"
+    "dmghd" => "Plain CRE V1.0 with deleted item slots and 0x20 bytes deleted at offset 0x10"
+    "0off"  => "Plain CRE V1.0 with zeroed effect offset and 0 effects"
+    "wrngoff" => "Plain CRE V1.0 with 0xc deducted from offset at 0x2a8"
   END
 
   ACTION_PHP_EACH invalid#cre AS file => desc BEGIN
