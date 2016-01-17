@@ -11,6 +11,12 @@ INCLUDE ~%MOD_FOLDER%/fl#valid.tpa~
 OUTER_SET fl#valid#silent = 0
 
 /*
+ * Test suite configuration options
+ */
+/* Add a failing test to all test groups */
+OUTER_SET fl#valid_tests#poison_tests = 0
+
+/*
  * Test suite global state
  */
 OUTER_SET success = 0
@@ -70,6 +76,11 @@ BEGIN
       OUTER_SPRINT failed_invalidity_tests "%failed_invalidity_tests%%desc%%LNL%"
       WARN "Error caught: %ERROR_MESSAGE%"
   END
+END
+
+ACTION_IF fl#valid_tests#poison_tests BEGIN
+  PRINT "Adding poisoned tests"
+  INCLUDE ~%MOD_FOLDER%/tests/poison.tpa~
 END
 
 PRINT "Testing known good structures"
