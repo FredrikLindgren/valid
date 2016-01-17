@@ -2,6 +2,7 @@ DEFINE_ACTION_FUNCTION fl#valid_tests#tests#invalid#cre
   RET
     success
     fail
+    failed_invalidity_tests
 BEGIN
   OUTER_SPRINT file_root "%MOD_FOLDER%/tests/invalid/cre"
 
@@ -15,8 +16,16 @@ BEGIN
   END
 
   ACTION_PHP_EACH invalid#cre AS file => desc BEGIN
-    LAF test_invalid STR_VAR file = EVAL "%file_root%/%file%.cre" desc RET success fail END
+    LAF test_invalid
+      STR_VAR
+        file = EVAL "%file_root%/%file%.cre"
+        desc
+      RET
+        success
+        fail
+        failed_invalidity_tests
+    END
   END
 END
 
-LAF fl#valid_tests#tests#invalid#cre RET success fail END
+LAF fl#valid_tests#tests#invalid#cre RET success fail failed_invalidity_tests END

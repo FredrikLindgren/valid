@@ -5,10 +5,18 @@ BEGIN ~Test suite for the fl#valid structure-validity library~
 
 INCLUDE ~%MOD_FOLDER%/fl#valid.tpa~
 
+/*
+ * fl#valid configuration options
+ */
 OUTER_SET fl#valid#silent = 0
 
+/*
+ * Test suite global state
+ */
 OUTER_SET success = 0
 OUTER_SET fail = 0
+OUTER_SPRINT failed_validity_tests ""
+OUTER_SPRINT failed_invalidity_tests ""
 
 DEFINE_ACTION_FUNCTION test_valid
   STR_VAR
@@ -17,7 +25,9 @@ DEFINE_ACTION_FUNCTION test_valid
   RET
     success
     fail
+    failed_validity_tests
 BEGIN
+  PRINT "Running validity test: %desc%"
   ACTION_TRY
     COPY - "%file%" ".../fl#valid_tests/%file%"
       LPF fl#valid STR_VAR file RET valid END
@@ -25,12 +35,12 @@ BEGIN
       OUTER_SET ++success
     END ELSE BEGIN
       OUTER_SET ++fail
-      WARN "Validity test failed: %desc%"
+      OUTER_SPRINT failed_validity_tests "%failed_validity_tests%%desc%%LNL%"
     END
   WITH
     DEFAULT
       OUTER_SET ++fail
-      WARN "Validity test failed: %desc%"
+      OUTER_SPRINT failed_validity_tests "%failed_validity_tests%%desc%%LNL%"
       WARN "Error caught: %ERROR_MESSAGE%"
   END
 END
@@ -42,7 +52,9 @@ DEFINE_ACTION_FUNCTION test_invalid
   RET
     success
     fail
+    failed_invalidity_tests
 BEGIN
+  PRINT "Running invalidity test: %desc%"
   ACTION_TRY
     COPY - "%file%" ".../fl#valid_tests/%file%"
       LPF fl#valid STR_VAR file RET valid END
@@ -50,12 +62,12 @@ BEGIN
       OUTER_SET ++success
     END ELSE BEGIN
       OUTER_SET ++fail
-      WARN "Invalidity test failed: %desc%"
+      OUTER_SPRINT failed_invalidity_tests "%failed_invalidity_tests%%desc%%LNL%"
     END
   WITH
     DEFAULT
       OUTER_SET ++fail
-      WARN "Invalidity test failed: %desc%"
+      OUTER_SPRINT failed_invalidity_tests "%failed_invalidity_tests%%desc%%LNL%"
       WARN "Error caught: %ERROR_MESSAGE%"
   END
 END
@@ -67,3 +79,9 @@ PRINT "Testing known bad structures"
 INCLUDE ~%MOD_FOLDER%/tests/invalid.tpa~
 
 PRINT "Testing concluded%LNL%Successful tests: %success%%LNL%Failed tests: %fail%"
+ACTION_IF "%failed_validity_tests%" STR_CMP "" BEGIN
+  WARN "Failed validity tests:%LNL%%failed_validity_tests%"
+END
+ACTION_IF "%failed_invalidity_tests%" STR_CMP "" BEGIN
+  WARN "Failed invalidity tests:%LNL%%failed_invalidity_tests%"
+END
