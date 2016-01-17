@@ -402,12 +402,30 @@ BEGIN
   LPF fl#valid#itm#signature RET valid version END
   PATCH_IF valid BEGIN
     LPF fl#valid#itm#size STR_VAR version RET valid END
+    PATCH_IF valid BEGIN
+      LPF fl#valid#itm#offsets STR_VAR version RET valid END
+    END
   END
 END
 
 OUTER_SET fl#valid#itm#v1#header_length = 0x72
 OUTER_SET fl#valid#itm#v11#header_length = 0x9a
 OUTER_SET fl#valid#itm#v20#header_length = 0x82
+
+ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid#itm#v1#offsets BEGIN
+  0x64 => 0x68
+  0x6a => 0x70
+END
+
+ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid#itm#v11#offsets BEGIN
+  0x64 => 0x68
+  0x6a => 0x70
+END
+
+ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid#itm#v20#offsets BEGIN
+  0x64 => 0x68
+  0x6a => 0x70
+END
 
 DEFINE_PATCH_FUNCTION fl#valid#itm#signature
   RET
@@ -455,6 +473,76 @@ BEGIN
   END
 END
 
+DEFINE_PATCH_FUNCTION fl#valid#itm#offsets#check
+  INT_VAR
+    header_length = 0
+  STR_VAR
+    offset_array = ""
+  RET
+    valid
+BEGIN
+  valid = 1
+  PHP_EACH "%offset_array%" AS start_offset => count_offset BEGIN
+    READ_LONG  start_offset start
+    READ_SHORT count_offset count
+    PATCH_IF start < header_length BEGIN
+      valid = 0
+      LPF fl#valid#chat
+        STR_VAR
+          m = "WARNING: item buffer has structure-start offset pointing into header"
+      END
+    END
+  END
+END
+
+DEFINE_PATCH_FUNCTION fl#valid#itm#offsets
+  STR_VAR
+    version = ""
+  RET
+    valid
+BEGIN
+  valid = 1
+  PATCH_MATCH "%version%" WITH
+    "V1  "
+    BEGIN
+      LPF fl#valid#itm#offsets#check
+        INT_VAR
+          header_length = fl#valid#itm#v1#header_length
+        STR_VAR
+          offset_array = fl#valid#itm#v1#offsets
+        RET
+          valid
+      END
+    END
+
+    "V1.1"
+    BEGIN
+      LPF fl#valid#itm#offsets#check
+        INT_VAR
+          header_length = fl#valid#itm#v11#header_length
+        STR_VAR
+          offset_array = fl#valid#itm#v11#offsets
+        RET
+          valid
+      END
+    END
+
+    "V2.0"
+    BEGIN
+      LPF fl#valid#itm#offsets#check
+        INT_VAR
+          header_length = fl#valid#itm#v20#header_length
+        STR_VAR
+          offset_array = fl#valid#itm#v20#offsets
+        RET
+          valid
+      END
+    END
+
+    DEFAULT
+  END
+END
+
 /*********************************************************************
  * SPL
  ********************************************************************/
@@ -470,11 +558,24 @@ BEGIN
   LPF fl#valid#spl#signature RET valid version END
   PATCH_IF valid BEGIN
     LPF fl#valid#spl#size STR_VAR version RET valid END
+    PATCH_IF valid BEGIN
+      LPF fl#valid#spl#offsets STR_VAR version RET valid END
+    END
   END
 END
 
 OUTER_SET fl#valid#spl#v1#header_length = 0x72
 OUTER_SET fl#valid#spl#v20#header_length = 0x82
+
+ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid#spl#v1#offsets BEGIN
+  0x64 => 0x68
+  0x6a => 0x70
+END
+
+ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid#spl#v20#offsets BEGIN
+  0x64 => 0x68
+  0x6a => 0x70
+END
 
 DEFINE_PATCH_FUNCTION fl#valid#spl#signature
   RET
@@ -512,5 +613,63 @@ BEGIN
 
     DEFAULT
       valid = 1
+  END
+END
+
+DEFINE_PATCH_FUNCTION fl#valid#spl#offsets#check
+  INT_VAR
+    header_length = 0
+  STR_VAR
+    offset_array = ""
+  RET
+    valid
+BEGIN
+  valid = 1
+  PHP_EACH "%offset_array%" AS start_offset => count_offset BEGIN
+    READ_LONG  start_offset start
+    READ_SHORT count_offset count
+    PATCH_IF start < header_length BEGIN
+      valid = 0
+      LPF fl#valid#chat
+        STR_VAR
+          m = "WARNING: spell buffer has structure-start offset pointing into header"
+      END
+    END
+  END
+END
+
+DEFINE_PATCH_FUNCTION fl#valid#spl#offsets
+  STR_VAR
+    version = ""
+  RET
+    valid
+BEGIN
+  valid = 1
+  PATCH_MATCH "%version%" WITH
+    "V1  "
+    BEGIN
+      LPF fl#valid#spl#offsets#check
+        INT_VAR
+          header_length = fl#valid#spl#v1#header_length
+        STR_VAR
+          offset_array = fl#valid#spl#v1#offsets
+        RET
+          valid
+      END
+    END
+
+    "V2.0"
+    BEGIN
+      LPF fl#valid#spl#offsets#check
+        INT_VAR
+          header_length = fl#valid#spl#v20#header_length
+        STR_VAR
+          offset_array = fl#valid#spl#v20#offsets
+        RET
+          valid
+      END
+    END
+
+    DEFAULT
   END
 END

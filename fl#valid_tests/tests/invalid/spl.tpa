@@ -10,6 +10,7 @@ BEGIN
     "nover" => "SPL with erased version"
     "splv10" => "SPL with incorrect V1.0 version"
     "dmghd" => "SPL with damaged header"
+    "wrngoff" => "Plain SPL with 0x30 deducted off the effect offset"
   END
 
   ACTION_PHP_EACH invalid#spl AS file => desc BEGIN

@@ -10,6 +10,7 @@ BEGIN
     "nover" => "ITM with erased version"
     "itmv10" => "ITM with incorrect V1.0 version"
     "dmghd" => "ITM with damaged header"
+    "0off" => "Plain ITM with zeroed ability offset"
   END
 
   ACTION_PHP_EACH invalid#itm AS file => desc BEGIN
