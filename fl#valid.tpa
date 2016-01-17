@@ -114,10 +114,12 @@ DEFINE_PATCH_FUNCTION fl#valid#cre
     valid
 BEGIN
   LPF fl#valid#cre#signature RET valid version END
-  PATCH_IF valid BEGIN
-    LPF fl#valid#cre#size STR_VAR version RET valid END
+  PATCH_FOR_EACH check IN
+                 fl#valid#cre#size
+                 fl#valid#cre#offsets
+  BEGIN
     PATCH_IF valid BEGIN
-      LPF fl#valid#cre#offsets STR_VAR version RET valid END
+      LPF "%check%" STR_VAR version RET valid END
     END
   END
 END
@@ -400,10 +402,12 @@ DEFINE_PATCH_FUNCTION fl#valid#itm
     valid
 BEGIN
   LPF fl#valid#itm#signature RET valid version END
-  PATCH_IF valid BEGIN
-    LPF fl#valid#itm#size STR_VAR version RET valid END
+  PATCH_FOR_EACH check IN
+                 fl#valid#itm#size
+                 fl#valid#itm#offsets
+  BEGIN
     PATCH_IF valid BEGIN
-      LPF fl#valid#itm#offsets STR_VAR version RET valid END
+      LPF "%check%" STR_VAR version RET valid END
     END
   END
 END
@@ -556,10 +560,12 @@ DEFINE_PATCH_FUNCTION fl#valid#spl
     valid
 BEGIN
   LPF fl#valid#spl#signature RET valid version END
-  PATCH_IF valid BEGIN
-    LPF fl#valid#spl#size STR_VAR version RET valid END
+  PATCH_FOR_EACH check IN
+                 fl#valid#spl#size
+                 fl#valid#spl#offsets
+  BEGIN
     PATCH_IF valid BEGIN
-      LPF fl#valid#spl#offsets STR_VAR version RET valid END
+      LPF "%check%" STR_VAR version RET valid END
     END
   END
 END
