@@ -8,7 +8,7 @@ BEGIN
 
   ACTION_DEFINE_ASSOCIATIVE_ARRAY valid#itm BEGIN
     "itmv1" => "Plain ITM V1 created by NI v1.36-20151216"
-    "itmv11" => "Plain ITM V1.1 created by WeiDU 238.02"
+    "itmv11" => "Plain ITM V1.1 created by WeiDU, commit 1d19c83c"
     "itmv20" => "Plain ITM V2.0 created by WeiDU 238.02"
   END
 
