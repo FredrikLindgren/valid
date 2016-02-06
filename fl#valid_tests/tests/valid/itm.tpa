@@ -10,6 +10,9 @@ BEGIN
     "itmv1" => "Plain ITM V1 created by NI v1.36-20151216"
     "itmv11" => "Plain ITM V1.1 created by WeiDU, commit 1d19c83c"
     "itmv20" => "Plain ITM V2.0 created by WeiDU 238.02"
+    "itmv1a1" => "ITM V1 with 1 ability, created by NI v1.36-20151216"
+    "itmv1a2" => "ITM V1 with 1 ability, located before effects, and 1 extended effect, created by NI v1.36-20151216"
+    "ring39" => "Ring of Gaxx, BG2 Fixpack V11, alpha 1"
   END
 
   ACTION_PHP_EACH valid#itm AS file => desc BEGIN

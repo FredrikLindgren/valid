@@ -101,6 +101,9 @@ BEGIN
   END
 END
 
+OUTER_SET fl#valid#eff#v1#header_length = 0x30
+OUTER_SET fl#valid#eff#v2#header_length = 0x110
+
 /*********************************************************************
  * CRE
  ********************************************************************/
@@ -410,6 +413,7 @@ BEGIN
   PATCH_FOR_EACH check IN
                  fl#valid#itm#size
                  fl#valid#itm#offsets
+                 fl#valid#itm#structure#size
   BEGIN
     PATCH_IF valid BEGIN
       LPF "%check%" STR_VAR version RET valid END
@@ -438,6 +442,16 @@ END
 ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid#itm#v20#offsets BEGIN
   0x64 => 0x68
   0x6a => 0x70
+END
+
+ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid#itm#v1#extended_offsets BEGIN
+  0x64, 0x68 => 0x1e
+END
+
+ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid#itm#v1#lengths BEGIN
+  0, 0x68 => 0x38
+  0, 0x70 => fl#valid#eff#v1#header_length
+  0x68, 0x1e => fl#valid#eff#v1#header_length
 END
 
 DEFINE_PATCH_FUNCTION fl#valid#itm#signature
@@ -553,6 +567,101 @@ BEGIN
     END
 
     DEFAULT
+  END
+END
+
+DEFINE_PATCH_FUNCTION fl#valid#itm#structure#sum
+  INT_VAR
+    size = 0
+  STR_VAR
+    offset_array = ""
+    extended_offset_array = ""
+    size_array = ""
+  RET
+    size
+BEGIN
+  PHP_EACH "%offset_array%" AS _ => count_offset BEGIN
+    READ_SHORT count_offset count
+    structure_size = $EVAL "%size_array%"(0 "%count_offset%")
+    size += count * structure_size
+  END
+  PHP_EACH "%extended_offset_array%" AS offset => extended_offset BEGIN
+    iteration_length = $EVAL "%size_array%"(0 "%offset_1%")
+    READ_LONG offset_0 start
+    READ_SHORT offset_1 count
+    FOR (i = 0; i < count; ++i) BEGIN
+      READ_SHORT start + i * iteration_length + extended_offset extended_count
+      extended_size = $EVAL "%size_array%"("%offset_1%" "%extended_offset%")
+      size += extended_count * extended_size
+    END
+  END
+  /*
+  effects:
+    effect count
+    effect length
+  abilities:
+    ability count
+    ability length
+
+  extended effects:
+    ability offset
+    ability count
+    ability length
+      extended effect count
+      extended effect length
+  */
+END
+
+DEFINE_PATCH_FUNCTION fl#valid#itm#structure#size
+  STR_VAR
+    version = ""
+  RET
+    valid
+BEGIN
+  PATCH_MATCH "%version%" WITH
+    "%fl#valid#itm#v1%"
+    BEGIN
+      LPF fl#valid#itm#structure#sum
+        INT_VAR
+          size = fl#valid#itm#v1#header_length
+        STR_VAR
+          offset_array = fl#valid#itm#v1#offsets
+          extended_offset_array = fl#valid#itm#v1#extended_offsets
+          size_array = fl#valid#itm#v1#lengths
+        RET
+          size
+      END
+    END
+
+    "%fl#valid#itm#v11%"
+    BEGIN
+      size = fl#valid#itm#v11#header_length
+    END
+
+    "%fl#valid#itm#v20%"
+    BEGIN
+      size = fl#valid#itm#v20#header_length
+    END
+
+    DEFAULT
+      size = 0
+  END
+  PATCH_IF size > BUFFER_LENGTH BEGIN
+    valid = 0
+    LPF fl#valid#chat
+      STR_VAR
+        m = "WARNING: item buffer has missing bytes"
+    END
+  END
+  PATCH_IF size < BUFFER_LENGTH BEGIN
+    valid = 0
+    LPF fl#valid#chat
+      STR_VAR
+        m = "WARNING: item buffer has unreferenced bytes"
+    END
+  END
+  PATCH_IF size = BUFFER_LENGTH BEGIN
+    valid = 1
   END
 END
 
