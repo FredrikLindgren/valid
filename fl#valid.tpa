@@ -454,6 +454,13 @@ ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid#itm#v1#lengths BEGIN
   0x68, 0x1e => fl#valid#eff#v1#header_length
 END
 
+ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid#itm#v1#read_lengths BEGIN
+  0, 0x64 => 4
+  0, 0x68 => 2
+  0, 0x70 => 2
+  0x68, 0x1e => 2
+END
+
 DEFINE_PATCH_FUNCTION fl#valid#itm#signature
   RET
     valid
@@ -577,39 +584,45 @@ DEFINE_PATCH_FUNCTION fl#valid#itm#structure#sum
     offset_array = ""
     extended_offset_array = ""
     size_array = ""
+    read_length_array = ""
   RET
     size
 BEGIN
   PHP_EACH "%offset_array%" AS _ => count_offset BEGIN
-    READ_SHORT count_offset count
+    read_length = $EVAL "%read_length_array%"(0 "%count_offset%")
+    PATCH_IF read_length = 4 BEGIN
+      READ_LONG count_offset count
+    END ELSE BEGIN
+      READ_SHORT count_offset count
+    END
     structure_size = $EVAL "%size_array%"(0 "%count_offset%")
     size += count * structure_size
   END
   PHP_EACH "%extended_offset_array%" AS offset => extended_offset BEGIN
+    read_length = $EVAL "%read_length_array%"(0 "%offset_0%")
+    PATCH_IF read_length = 4 BEGIN
+      READ_LONG offset_0 start
+    END ELSE BEGIN
+      READ_SHORT offset_0 start
+    END
+    read_length = $EVAL "%read_length_array%"(0 "%offset_1%")
+    PATCH_IF read_length = 4 BEGIN
+      READ_LONG offset_1 count
+    END ELSE BEGIN
+      READ_SHORT offset_1 count
+    END
     iteration_length = $EVAL "%size_array%"(0 "%offset_1%")
-    READ_LONG offset_0 start
-    READ_SHORT offset_1 count
     FOR (i = 0; i < count; ++i) BEGIN
-      READ_SHORT start + i * iteration_length + extended_offset extended_count
+      read_length = $EVAL "%read_length_array%"("%offset_1%" "%extended_offset%")
+      PATCH_IF read_length = 4 BEGIN
+        READ_LONG start + i * iteration_length + extended_offset extended_count
+      END ELSE BEGIN
+        READ_SHORT start + i * iteration_length + extended_offset extended_count
+      END
       extended_size = $EVAL "%size_array%"("%offset_1%" "%extended_offset%")
       size += extended_count * extended_size
     END
   END
-  /*
-  effects:
-    effect count
-    effect length
-  abilities:
-    ability count
-    ability length
-
-  extended effects:
-    ability offset
-    ability count
-    ability length
-      extended effect count
-      extended effect length
-  */
 END
 
 DEFINE_PATCH_FUNCTION fl#valid#itm#structure#size
@@ -628,6 +641,7 @@ BEGIN
           offset_array = fl#valid#itm#v1#offsets
           extended_offset_array = fl#valid#itm#v1#extended_offsets
           size_array = fl#valid#itm#v1#lengths
+          read_length_array = fl#valid#itm#v1#read_lengths
         RET
           size
       END
