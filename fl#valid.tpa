@@ -107,6 +107,7 @@ OUTER_SET fl#valid#eff#v2#header_length = 0x110
 DEFINE_PATCH_FUNCTION fl#valid#structure#sum
   INT_VAR
     size = 0
+    always_read_length = "-1"
   STR_VAR
     offset_array = ""
     extended_offset_array = ""
@@ -116,7 +117,8 @@ DEFINE_PATCH_FUNCTION fl#valid#structure#sum
     size
 BEGIN
   PHP_EACH "%offset_array%" AS _ => count_offset BEGIN
-    read_length = $EVAL "%read_length_array%"(0 "%count_offset%")
+    read_length = always_read_length > 0 ? always_read_length :
+                  $EVAL "%read_length_array%"(0 "%count_offset%")
     PATCH_IF read_length = 4 BEGIN
       READ_LONG count_offset count
     END ELSE BEGIN
@@ -126,13 +128,15 @@ BEGIN
     size += count * structure_size
   END
   PHP_EACH "%extended_offset_array%" AS offset => extended_offset BEGIN
-    read_length = $EVAL "%read_length_array%"(0 "%offset_0%")
+    read_length = always_read_length > 0 ? always_read_length :
+                  $EVAL "%read_length_array%"(0 "%offset_0%")
     PATCH_IF read_length = 4 BEGIN
       READ_LONG offset_0 start
     END ELSE BEGIN
       READ_SHORT offset_0 start
     END
-    read_length = $EVAL "%read_length_array%"(0 "%offset_1%")
+    read_length = always_read_length > 0 ? always_read_length :
+                  $EVAL "%read_length_array%"(0 "%offset_1%")
     PATCH_IF read_length = 4 BEGIN
       READ_LONG offset_1 count
     END ELSE BEGIN
@@ -140,7 +144,8 @@ BEGIN
     END
     iteration_length = $EVAL "%size_array%"(0 "%offset_1%")
     FOR (i = 0; i < count; ++i) BEGIN
-      read_length = $EVAL "%read_length_array%"("%offset_1%" "%extended_offset%")
+      read_length = always_read_length > 0 ? always_read_length :
+                    $EVAL "%read_length_array%"("%offset_1%" "%extended_offset%")
       PATCH_IF read_length = 4 BEGIN
         READ_LONG start + i * iteration_length + extended_offset extended_count
       END ELSE BEGIN
