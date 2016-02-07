@@ -12,6 +12,7 @@ BEGIN
     "splv10" => "Plain SPL with incorrect V1.0 version"
     "dmghd" => "Plain SPL V1 with 0x20 bytes deleted at offset 0x10"
     "wrngoff" => "Plain SPL V1 with 0x30 deducted off the effect offset"
+    "spwi304" => "Fireball, BG2 Fixpack V11, alpha 1, with 1 deducted off extended-effect count on the 3rd ability"
   END
 
   ACTION_PHP_EACH invalid#spl AS file => desc BEGIN

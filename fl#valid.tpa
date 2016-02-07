@@ -705,6 +705,7 @@ BEGIN
   PATCH_FOR_EACH check IN
                  fl#valid#spl#size
                  fl#valid#spl#offsets
+                 fl#valid#spl#structure#size
   BEGIN
     PATCH_IF valid BEGIN
       LPF "%check%" STR_VAR version RET valid END
@@ -718,14 +719,31 @@ OUTER_SPRINT fl#valid#spl#v20 "V2.0"
 OUTER_SET fl#valid#spl#v1#header_length = 0x72
 OUTER_SET fl#valid#spl#v20#header_length = 0x82
 
-ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid#spl#v1#offsets BEGIN
+ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid#spl#offsets BEGIN
   0x64 => 0x68
   0x6a => 0x70
 END
 
-ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid#spl#v20#offsets BEGIN
+ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid#spl#offsets BEGIN
   0x64 => 0x68
   0x6a => 0x70
+END
+
+ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid#spl#extended_offsets BEGIN
+  0x64, 0x68 => 0x1e
+END
+
+ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid#spl#lengths BEGIN
+  0, 0x68 => 0x28
+  0, 0x70 => fl#valid#eff#v1#header_length
+  0x68, 0x1e => fl#valid#eff#v1#header_length
+END
+
+ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid#spl#read_lengths BEGIN
+  0, 0x64 => 4
+  0, 0x68 => 2
+  0, 0x70 => 2
+  0x68, 0x1e => 2
 END
 
 DEFINE_PATCH_FUNCTION fl#valid#spl#signature
@@ -803,7 +821,7 @@ BEGIN
         INT_VAR
           header_length = fl#valid#spl#v1#header_length
         STR_VAR
-          offset_array = fl#valid#spl#v1#offsets
+          offset_array = fl#valid#spl#offsets
         RET
           valid
       END
@@ -815,12 +833,71 @@ BEGIN
         INT_VAR
           header_length = fl#valid#spl#v20#header_length
         STR_VAR
-          offset_array = fl#valid#spl#v20#offsets
+          offset_array = fl#valid#spl#offsets
         RET
           valid
       END
     END
 
     DEFAULT
+  END
+END
+
+DEFINE_PATCH_FUNCTION fl#valid#spl#structure#size
+  STR_VAR
+    version = ""
+  RET
+    valid
+BEGIN
+  PATCH_MATCH "%version%" WITH
+    "%fl#valid#spl#v1%"
+    BEGIN
+      LPF fl#valid#structure#sum
+        INT_VAR
+          size = fl#valid#spl#v1#header_length
+        STR_VAR
+          offset_array = fl#valid#spl#offsets
+          extended_offset_array = fl#valid#spl#extended_offsets
+          size_array = fl#valid#spl#lengths
+          read_length_array = fl#valid#spl#read_lengths
+        RET
+          size
+      END
+    END
+
+    "%fl#valid#spl#v20%"
+    BEGIN
+      LPF fl#valid#structure#sum
+        INT_VAR
+          size = fl#valid#spl#v20#header_length
+        STR_VAR
+          offset_array = fl#valid#spl#offsets
+          extended_offset_array = fl#valid#spl#extended_offsets
+          size_array = fl#valid#spl#lengths
+          read_length_array = fl#valid#spl#read_lengths
+        RET
+          size
+      END
+    END
+
+    DEFAULT
+      size = 0
+  END
+  PATCH_IF size > BUFFER_LENGTH BEGIN
+    valid = 0
+    LPF fl#valid#chat
+      STR_VAR
+        m = "WARNING: spell buffer has missing bytes"
+    END
+  END
+  PATCH_IF size < BUFFER_LENGTH BEGIN
+    valid = 0
+    LPF fl#valid#chat
+      STR_VAR
+        m = "WARNING: spell buffer has unreferenced bytes"
+    END
+  END
+  PATCH_IF size = BUFFER_LENGTH BEGIN
+    valid = 1
   END
 END

@@ -9,6 +9,7 @@ BEGIN
   ACTION_DEFINE_ASSOCIATIVE_ARRAY valid#spl BEGIN
     "splv1" => "Plain SPL V1 created by NI v1.36-20151216"
     "splv20" => "Plain SPL V2.0 created by WeiDU 238.02"
+    "spwi304" => "Fireball, BG2 Fixpack V11, alpha 1"
   END
 
   ACTION_PHP_EACH valid#spl AS file => desc BEGIN
