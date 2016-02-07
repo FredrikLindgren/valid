@@ -13,6 +13,9 @@ BEGIN
     "itmv1a1" => "ITM V1 with 1 ability, created by NI v1.36-20151216"
     "itmv1a2" => "ITM V1 with 1 ability, located before effects, and 1 extended effect, created by NI v1.36-20151216"
     "ring39" => "Ring of Gaxx, BG2 Fixpack V11, alpha 1"
+    "00ring70" => "ITM V2.0 IWD2 Petrification Protection Ring"
+    "ogien" => "ITM V1 IWD Ogien's Scale"
+    "bell" => "ITM V1.1 PST Bell's Shield"
   END
 
   ACTION_PHP_EACH valid#itm AS file => desc BEGIN

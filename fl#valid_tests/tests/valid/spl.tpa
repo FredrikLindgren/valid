@@ -10,6 +10,9 @@ BEGIN
     "splv1" => "Plain SPL V1 created by NI v1.36-20151216"
     "splv20" => "Plain SPL V2.0 created by WeiDU 238.02"
     "spwi304" => "Fireball, BG2 Fixpack V11, alpha 1"
+    "spwi122" => "SPL V2.0 IWD2 Ice Dagger"
+    "spin129" => "SPL V1 IWD Eye of Venom"
+    "sppr201" => "SPL V1 PST Aid"
   END
 
   ACTION_PHP_EACH valid#spl AS file => desc BEGIN

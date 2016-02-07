@@ -11,6 +11,14 @@ BEGIN
    "crev12" => "Plain CRE V1.2 created by WeiDU 238.02"
    "crev22" => "Plain CRE V2.2 created by WeiDU 238.02"
    "crev90" => "Plain CRE V9.0 created by WeiDU 238.02"
+   "00sdcrn" => "CRE V2.2 IWD2 Cornugon"
+   "53dridwi" => "CRE V2.2 IWD2 Drider Wizard"
+   "cpmumg" => "CRE V9.0 IWD Greater Mummy"
+   "malavon" => "CRE V9.0 IWD Malavon"
+   "aola" => "CRE V1.2 PST Aola"
+   "ravel" => "CRE V1.2 PST Ravel"
+   "aataqah" => "CRE V1.0 BG2 Aataqah"
+   "helljon" => "CRE V1.0 BG2 Irenicus, BG2 Fixpack V11, alpha 1"
   END
 
   ACTION_PHP_EACH valid#cre AS file => desc BEGIN
