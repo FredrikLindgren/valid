@@ -104,6 +104,54 @@ END
 OUTER_SET fl#valid#eff#v1#header_length = 0x30
 OUTER_SET fl#valid#eff#v2#header_length = 0x110
 
+DEFINE_PATCH_FUNCTION fl#valid#structure#sum
+  INT_VAR
+    size = 0
+  STR_VAR
+    offset_array = ""
+    extended_offset_array = ""
+    size_array = ""
+    read_length_array = ""
+  RET
+    size
+BEGIN
+  PHP_EACH "%offset_array%" AS _ => count_offset BEGIN
+    read_length = $EVAL "%read_length_array%"(0 "%count_offset%")
+    PATCH_IF read_length = 4 BEGIN
+      READ_LONG count_offset count
+    END ELSE BEGIN
+      READ_SHORT count_offset count
+    END
+    structure_size = $EVAL "%size_array%"(0 "%count_offset%")
+    size += count * structure_size
+  END
+  PHP_EACH "%extended_offset_array%" AS offset => extended_offset BEGIN
+    read_length = $EVAL "%read_length_array%"(0 "%offset_0%")
+    PATCH_IF read_length = 4 BEGIN
+      READ_LONG offset_0 start
+    END ELSE BEGIN
+      READ_SHORT offset_0 start
+    END
+    read_length = $EVAL "%read_length_array%"(0 "%offset_1%")
+    PATCH_IF read_length = 4 BEGIN
+      READ_LONG offset_1 count
+    END ELSE BEGIN
+      READ_SHORT offset_1 count
+    END
+    iteration_length = $EVAL "%size_array%"(0 "%offset_1%")
+    FOR (i = 0; i < count; ++i) BEGIN
+      read_length = $EVAL "%read_length_array%"("%offset_1%" "%extended_offset%")
+      PATCH_IF read_length = 4 BEGIN
+        READ_LONG start + i * iteration_length + extended_offset extended_count
+      END ELSE BEGIN
+        READ_SHORT start + i * iteration_length + extended_offset extended_count
+      END
+      extended_size = $EVAL "%size_array%"("%offset_1%" "%extended_offset%")
+      size += extended_count * extended_size
+    END
+  END
+END
+
 /*********************************************************************
  * CRE
  ********************************************************************/
@@ -429,32 +477,22 @@ OUTER_SET fl#valid#itm#v1#header_length = 0x72
 OUTER_SET fl#valid#itm#v11#header_length = 0x9a
 OUTER_SET fl#valid#itm#v20#header_length = 0x82
 
-ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid#itm#v1#offsets BEGIN
+ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid#itm#offsets BEGIN
   0x64 => 0x68
   0x6a => 0x70
 END
 
-ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid#itm#v11#offsets BEGIN
-  0x64 => 0x68
-  0x6a => 0x70
-END
-
-ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid#itm#v20#offsets BEGIN
-  0x64 => 0x68
-  0x6a => 0x70
-END
-
-ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid#itm#v1#extended_offsets BEGIN
+ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid#itm#extended_offsets BEGIN
   0x64, 0x68 => 0x1e
 END
 
-ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid#itm#v1#lengths BEGIN
+ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid#itm#lengths BEGIN
   0, 0x68 => 0x38
   0, 0x70 => fl#valid#eff#v1#header_length
   0x68, 0x1e => fl#valid#eff#v1#header_length
 END
 
-ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid#itm#v1#read_lengths BEGIN
+ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid#itm#read_lengths BEGIN
   0, 0x64 => 4
   0, 0x68 => 2
   0, 0x70 => 2
@@ -543,7 +581,7 @@ BEGIN
         INT_VAR
           header_length = fl#valid#itm#v1#header_length
         STR_VAR
-          offset_array = fl#valid#itm#v1#offsets
+          offset_array = fl#valid#itm#offsets
         RET
           valid
       END
@@ -555,7 +593,7 @@ BEGIN
         INT_VAR
           header_length = fl#valid#itm#v11#header_length
         STR_VAR
-          offset_array = fl#valid#itm#v11#offsets
+          offset_array = fl#valid#itm#offsets
         RET
           valid
       END
@@ -567,61 +605,13 @@ BEGIN
         INT_VAR
           header_length = fl#valid#itm#v20#header_length
         STR_VAR
-          offset_array = fl#valid#itm#v20#offsets
+          offset_array = fl#valid#itm#offsets
         RET
           valid
       END
     END
 
     DEFAULT
-  END
-END
-
-DEFINE_PATCH_FUNCTION fl#valid#itm#structure#sum
-  INT_VAR
-    size = 0
-  STR_VAR
-    offset_array = ""
-    extended_offset_array = ""
-    size_array = ""
-    read_length_array = ""
-  RET
-    size
-BEGIN
-  PHP_EACH "%offset_array%" AS _ => count_offset BEGIN
-    read_length = $EVAL "%read_length_array%"(0 "%count_offset%")
-    PATCH_IF read_length = 4 BEGIN
-      READ_LONG count_offset count
-    END ELSE BEGIN
-      READ_SHORT count_offset count
-    END
-    structure_size = $EVAL "%size_array%"(0 "%count_offset%")
-    size += count * structure_size
-  END
-  PHP_EACH "%extended_offset_array%" AS offset => extended_offset BEGIN
-    read_length = $EVAL "%read_length_array%"(0 "%offset_0%")
-    PATCH_IF read_length = 4 BEGIN
-      READ_LONG offset_0 start
-    END ELSE BEGIN
-      READ_SHORT offset_0 start
-    END
-    read_length = $EVAL "%read_length_array%"(0 "%offset_1%")
-    PATCH_IF read_length = 4 BEGIN
-      READ_LONG offset_1 count
-    END ELSE BEGIN
-      READ_SHORT offset_1 count
-    END
-    iteration_length = $EVAL "%size_array%"(0 "%offset_1%")
-    FOR (i = 0; i < count; ++i) BEGIN
-      read_length = $EVAL "%read_length_array%"("%offset_1%" "%extended_offset%")
-      PATCH_IF read_length = 4 BEGIN
-        READ_LONG start + i * iteration_length + extended_offset extended_count
-      END ELSE BEGIN
-        READ_SHORT start + i * iteration_length + extended_offset extended_count
-      END
-      extended_size = $EVAL "%size_array%"("%offset_1%" "%extended_offset%")
-      size += extended_count * extended_size
-    END
   END
 END
 
@@ -634,14 +624,14 @@ BEGIN
   PATCH_MATCH "%version%" WITH
     "%fl#valid#itm#v1%"
     BEGIN
-      LPF fl#valid#itm#structure#sum
+      LPF fl#valid#structure#sum
         INT_VAR
           size = fl#valid#itm#v1#header_length
         STR_VAR
-          offset_array = fl#valid#itm#v1#offsets
-          extended_offset_array = fl#valid#itm#v1#extended_offsets
-          size_array = fl#valid#itm#v1#lengths
-          read_length_array = fl#valid#itm#v1#read_lengths
+          offset_array = fl#valid#itm#offsets
+          extended_offset_array = fl#valid#itm#extended_offsets
+          size_array = fl#valid#itm#lengths
+          read_length_array = fl#valid#itm#read_lengths
         RET
           size
       END
@@ -649,12 +639,32 @@ BEGIN
 
     "%fl#valid#itm#v11%"
     BEGIN
-      size = fl#valid#itm#v11#header_length
+      LPF fl#valid#structure#sum
+        INT_VAR
+          size = fl#valid#itm#v11#header_length
+        STR_VAR
+          offset_array = fl#valid#itm#offsets
+          extended_offset_array = fl#valid#itm#extended_offsets
+          size_array = fl#valid#itm#lengths
+          read_length_array = fl#valid#itm#read_lengths
+        RET
+          size
+      END
     END
 
     "%fl#valid#itm#v20%"
     BEGIN
-      size = fl#valid#itm#v20#header_length
+      LPF fl#valid#structure#sum
+        INT_VAR
+          size = fl#valid#itm#v20#header_length
+        STR_VAR
+          offset_array = fl#valid#itm#offsets
+          extended_offset_array = fl#valid#itm#extended_offsets
+          size_array = fl#valid#itm#lengths
+          read_length_array = fl#valid#itm#read_lengths
+        RET
+          size
+      END
     END
 
     DEFAULT
