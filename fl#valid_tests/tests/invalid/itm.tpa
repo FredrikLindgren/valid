@@ -14,6 +14,7 @@ BEGIN
     "0off" => "Plain ITM V1 with zeroed ability offset"
     "itmv1a2" => "ITM V1 with 1 ability, located before effects, and 1 extended effect, created by NI v1.36-20151216, with 1 added to extended-effect count"
     "ring39" => "Ring of Gaxx, BG2 Fixpack V11, alpha 1, with 1 subtracted off global-effect count"
+    "ax1h10" => "Azuredge, BG2, unreferenced bytes"
   END
 
   ACTION_PHP_EACH invalid#itm AS file => desc BEGIN
