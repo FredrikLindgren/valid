@@ -700,18 +700,18 @@ BEGIN
   END
   PATCH_IF size > BUFFER_LENGTH BEGIN
     valid = 0
-    SPRINT failure "missing bytes"
+    SPRINT failure "fewer bytes"
     LPF fl#valid#chat
       STR_VAR
-        m = "WARNING: creature buffer has missing bytes"
+        m = "WARNING: creature buffer has fewer bytes than expected"
     END
   END
   PATCH_IF size < BUFFER_LENGTH BEGIN
     valid = 0
-    SPRINT failure "unreferenced bytes"
+    SPRINT failure "more bytes"
     LPF fl#valid#chat
       STR_VAR
-        m = "WARNING: creature buffer has unreferenced bytes"
+        m = "WARNING: creature buffer has more bytes than expected"
     END
   END
   PATCH_IF size = BUFFER_LENGTH BEGIN
@@ -973,18 +973,18 @@ BEGIN
   END
   PATCH_IF size > BUFFER_LENGTH BEGIN
     valid = 0
-    SPRINT failure "missing bytes"
+    SPRINT failure "fewer bytes"
     LPF fl#valid#chat
       STR_VAR
-        m = "WARNING: item buffer has missing bytes"
+        m = "WARNING: item buffer has fewer bytes than expected"
     END
   END
   PATCH_IF size < BUFFER_LENGTH BEGIN
     valid = 0
-    SPRINT failure "unreferenced bytes"
+    SPRINT failure "more bytes"
     LPF fl#valid#chat
       STR_VAR
-        m = "WARNING: item buffer has unreferenced bytes"
+        m = "WARNING: item buffer has more bytes than expected"
     END
   END
   PATCH_IF size = BUFFER_LENGTH BEGIN
@@ -1212,18 +1212,18 @@ BEGIN
   END
   PATCH_IF size > BUFFER_LENGTH BEGIN
     valid = 0
-    SPRINT failure "missing bytes"
+    SPRINT failure "fewer bytes"
     LPF fl#valid#chat
       STR_VAR
-        m = "WARNING: spell buffer has missing bytes"
+        m = "WARNING: spell buffer has fewer bytes than expected"
     END
   END
   PATCH_IF size < BUFFER_LENGTH BEGIN
     valid = 0
-    SPRINT failure "unreferenced bytes"
+    SPRINT failure "more bytes"
     LPF fl#valid#chat
       STR_VAR
-        m = "WARNING: spell buffer has unreferenced bytes"
+        m = "WARNING: spell buffer has more bytes than expected"
     END
   END
   PATCH_IF size = BUFFER_LENGTH BEGIN
