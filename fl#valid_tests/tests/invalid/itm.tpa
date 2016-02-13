@@ -7,21 +7,22 @@ BEGIN
   OUTER_SPRINT file_root "%MOD_FOLDER%/tests/invalid/itm"
 
   ACTION_DEFINE_ASSOCIATIVE_ARRAY invalid#itm BEGIN
-    "nosig" => "Plain ITM V1 with erased signature"
-    "nover" => "Plain ITM V1 with erased version"
-    "itmv10" => "Plain ITM with incorrect V1.0 version"
-    "dmghd" => "Plain ITM V1 with 0x20 bytes deleted at offset 0x10"
-    "0off" => "Plain ITM V1 with zeroed ability offset"
-    "wrngoff2" => "Plain ITM V1 with 0x30 added to the effects offset"
-    "itmv1a2" => "ITM V1 with 1 ability, located before effects, and 1 extended effect, created by NI v1.36-20151216, with 1 added to extended-effect count"
-    "ring39" => "Ring of Gaxx, BG2 Fixpack V11, alpha 1, with 1 subtracted off global-effect count"
-    "ax1h10" => "Azuredge, BG2, unreferenced bytes"
+    "nosig", "signature" => "Plain ITM V1 with erased signature"
+    "nover", "signature" => "Plain ITM V1 with erased version"
+    "itmv10", "signature" => "Plain ITM with incorrect V1.0 version"
+    "dmghd", "minimum size" => "Plain ITM V1 with 0x20 bytes deleted at offset 0x10"
+    "0off", "offset too low" => "Plain ITM V1 with zeroed ability offset"
+    "wrngoff2", "offset too high" => "Plain ITM V1 with 0x30 added to the effects offset"
+    "itmv1a2", "fewer bytes" => "ITM V1 with 1 ability, located before effects, and 1 extended effect, created by NI v1.36-20151216, with 1 added to extended-effect count"
+    "ring39", "more bytes" => "Ring of Gaxx, BG2 Fixpack V11, alpha 1, with 1 subtracted off global-effect count"
+    "ax1h10", "more bytes" => "Azuredge, BG2, unreferenced bytes"
   END
 
-  ACTION_PHP_EACH invalid#itm AS file => desc BEGIN
+  ACTION_PHP_EACH invalid#itm AS key => desc BEGIN
     LAF test_invalid
       STR_VAR
-        file = EVAL "%file_root%/%file%.itm"
+        file = EVAL "%file_root%/%key_0%.itm"
+        fail_mode = EVAL "%key_1%"
         desc
       RET
         success

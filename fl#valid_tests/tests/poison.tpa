@@ -1,13 +1,25 @@
-ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid_tests#poison BEGIN
+ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid_tests#poison#invalid BEGIN
   ~%MOD_FOLDER%/tests/valid/cre/crev10.cre~, "invalid#cre", "Valid CRE V1.0" => ~%MOD_FOLDER%/tests/invalid/cre~
   ~%MOD_FOLDER%/tests/valid/itm/itmv1.itm~, "invalid#itm", "Valid ITM V1" => ~%MOD_FOLDER%/tests/invalid/itm~
   ~%MOD_FOLDER%/tests/valid/spl/splv1.spl~, "invalid#spl", "Valid SPL V1" => ~%MOD_FOLDER%/tests/invalid/spl~
+END
+
+ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid_tests#poison#valid BEGIN
   ~%MOD_FOLDER%/tests/invalid/cre/null.cre~, "valid#cre", "0-byte file, CRE" => ~%MOD_FOLDER%/tests/valid/cre~
   ~%MOD_FOLDER%/tests/invalid/cre/null.cre~, "valid#itm", "0-byte file, ITM" => ~%MOD_FOLDER%/tests/valid/itm/null.itm~
   ~%MOD_FOLDER%/tests/invalid/cre/null.cre~, "valid#spl", "0-byte file, SPL" => ~%MOD_FOLDER%/tests/valid/spl/null.spl~
 END
 
-ACTION_PHP_EACH fl#valid_tests#poison AS key => dest BEGIN
+ACTION_PHP_EACH fl#valid_tests#poison#invalid AS key => dest BEGIN
+  ACTION_IF FILE_EXISTS "%key_0%" BEGIN
+    COPY "%key_0%" "%dest%"
+      DEFINE_ASSOCIATIVE_ARRAY EVAL "%key_1%" BEGIN
+        "%DEST_RES%", "" => "Poison test: %key_2%"
+      END
+  END ELSE WARN "Failed to add poison %key_0%"
+END
+
+ACTION_PHP_EACH fl#valid_tests#poison#valid AS key => dest BEGIN
   ACTION_IF FILE_EXISTS "%key_0%" BEGIN
     COPY "%key_0%" "%dest%"
       DEFINE_ASSOCIATIVE_ARRAY EVAL "%key_1%" BEGIN

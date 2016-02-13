@@ -54,6 +54,7 @@ END
 DEFINE_ACTION_FUNCTION test_invalid
   STR_VAR
     file = ""
+    fail_mode = ""
     desc = ""
   RET
     success
@@ -63,9 +64,13 @@ BEGIN
   PRINT "Running invalidity test: %desc%"
   ACTION_TRY
     COPY - "%file%" ".../fl#valid_tests/%file%"
-      LPF fl#valid STR_VAR file RET valid END
-    ACTION_IF !valid BEGIN
+      LPF fl#valid STR_VAR file RET valid failure END
+    ACTION_IF !valid AND "%failure%" STR_EQ "%fail_mode%" BEGIN
       OUTER_SET ++success
+    END ELSE ACTION_IF !valid AND "%failure%" STR_CMP "%fail_mode%" BEGIN
+      OUTER_SET ++fail
+      OUTER_SPRINT failed_invalidity_tests "%failed_invalidity_tests%%desc%%LNL%"
+      WARN "Framework error: check %fail_mode% should have failed, but test failed on %failure%"
     END ELSE BEGIN
       OUTER_SET ++fail
       OUTER_SPRINT failed_invalidity_tests "%failed_invalidity_tests%%desc%%LNL%"

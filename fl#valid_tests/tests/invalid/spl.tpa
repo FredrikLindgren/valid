@@ -7,19 +7,20 @@ BEGIN
   OUTER_SPRINT file_root "%MOD_FOLDER%/tests/invalid/spl"
 
   ACTION_DEFINE_ASSOCIATIVE_ARRAY invalid#spl BEGIN
-    "nosig" => "Plain SPL V1 with erased signature"
-    "nover" => "Plain SPL V1 with erased version"
-    "splv10" => "Plain SPL with incorrect V1.0 version"
-    "dmghd" => "Plain SPL V1 with 0x20 bytes deleted at offset 0x10"
-    "wrngoff" => "Plain SPL V1 with 0x30 deducted off the effect offset"
-    "wrngoff2" => "Plain SPL V1 with 0x30 added to the effects offset"
-    "spwi304" => "Fireball, BG2 Fixpack V11, alpha 1, with 1 deducted off extended-effect count on the 3rd ability"
+    "nosig", "signature" => "Plain SPL V1 with erased signature"
+    "nover", "signature" => "Plain SPL V1 with erased version"
+    "splv10", "signature" => "Plain SPL with incorrect V1.0 version"
+    "dmghd", "minimum size" => "Plain SPL V1 with 0x20 bytes deleted at offset 0x10"
+    "wrngoff", "offset too low" => "Plain SPL V1 with 0x30 deducted off the effect offset"
+    "wrngoff2", "offset too high" => "Plain SPL V1 with 0x30 added to the effects offset"
+    "spwi304", "more bytes" => "Fireball, BG2 Fixpack V11, alpha 1, with 1 deducted off extended-effect count on the 3rd ability"
   END
 
-  ACTION_PHP_EACH invalid#spl AS file => desc BEGIN
+  ACTION_PHP_EACH invalid#spl AS key => desc BEGIN
     LAF test_invalid
       STR_VAR
-        file = EVAL "%file_root%/%file%.spl"
+        file = EVAL "%file_root%/%key_0%.spl"
+        fail_mode = EVAL "%key_1%"
         desc
       RET
         success

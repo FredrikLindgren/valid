@@ -7,21 +7,22 @@ BEGIN
   OUTER_SPRINT file_root "%MOD_FOLDER%/tests/invalid/cre"
 
   ACTION_DEFINE_ASSOCIATIVE_ARRAY invalid#cre BEGIN
-    "nosig" => "Plain CRE V1.0 with erased signature and version"
-    "null"  => "File of zero length"
-    "nover" => "Plain CRE V1.0 with erased version"
-    "dmghd" => "Plain CRE V1.0 with deleted item slots and 0x20 bytes deleted at offset 0x10"
-    "0off"  => "Plain CRE V1.0 with zeroed effect offset and 0 effects"
-    "wrngoff" => "Plain CRE V1.0 with 0xc deducted from offset at 0x2a8"
-    "wrngoff2" => "Plain CRE V1.0 with 0x10c added to effects offset; 0 effects"
-    "aataqah1" => "Valid Aataqah with incorrctly updated offsets; no effects, but effects offset is 0x46c when it should be 0x480"
-    "aataqah2" => "aataqah1 with 1 effect added; no prior reindexing of the structure; structure overlap and unreferenced bytes, but a correct number of bytes"
+    "nosig", "signature" => "Plain CRE V1.0 with erased signature and version"
+    "null", "empty buffer"  => "File of zero length"
+    "nover", "signature" => "Plain CRE V1.0 with erased version"
+    "dmghd", "minimum size" => "Plain CRE V1.0 with deleted item slots and 0x20 bytes deleted at offset 0x10"
+    "0off", "offset too low"  => "Plain CRE V1.0 with zeroed effect offset and 0 effects"
+    "wrngoff", "offset too low" => "Plain CRE V1.0 with 0xc deducted from offset at 0x2a8"
+    "wrngoff2", "offset too high" => "Plain CRE V1.0 with 0x10c added to effects offset; 0 effects"
+    "aataqah1", "don't know yet" => "Valid Aataqah with incorrctly updated offsets; no effects, but effects offset is 0x46c when it should be 0x480"
+    "aataqah2", "don't know yet" => "aataqah1 with 1 effect added; no prior reindexing of the structure; structure overlap and unreferenced bytes, but a correct number of bytes"
   END
 
-  ACTION_PHP_EACH invalid#cre AS file => desc BEGIN
+  ACTION_PHP_EACH invalid#cre AS key => desc BEGIN
     LAF test_invalid
       STR_VAR
-        file = EVAL "%file_root%/%file%.cre"
+        file = EVAL "%file_root%/%key_0%.cre"
+        fail_mode = EVAL "%key_1%"
         desc
       RET
         success
