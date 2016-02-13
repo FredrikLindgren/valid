@@ -31,29 +31,33 @@ OUTER_SET fl#valid#silent = 0
 DEFINE_PATCH_FUNCTION fl#valid
   RET
     valid
+    failure
 BEGIN
   LPF fl#valid#signature RET signature END
   PATCH_MATCH "%signature%" WITH
-    "CRE " BEGIN LPF fl#valid#cre RET valid END END
+    "CRE " BEGIN LPF fl#valid#cre RET valid failure END END
 
-    "ITM " BEGIN LPF fl#valid#itm RET valid END END
+    "ITM " BEGIN LPF fl#valid#itm RET valid failure END END
 
-    "SPL " BEGIN LPF fl#valid#spl RET valid END END
+    "SPL " BEGIN LPF fl#valid#spl RET valid failure END END
 
     "%fl#null%"
     BEGIN
       valid = 0
+      SPRINT failure "signature"
       LPF fl#valid#chat STR_VAR m = "WARNING: buffer is missing a signature" END
     END
 
     "0-byte file"
     BEGIN
       valid = 0
+      SPRINT failure "empty buffer"
       LPF fl#valid#chat STR_VAR m = "WARNING: buffer is empty" END
     END
 
     DEFAULT
       valid = 1
+      SPRINT failure ""
       LPF fl#valid#chat
         STR_VAR
           m = "fl#valid does not support buffers of type %signature%; no validation is done"
@@ -66,10 +70,11 @@ DEFINE_ACTION_FUNCTION fl#valid
     file = ""
   RET
     valid
+    failure
 BEGIN
   ACTION_IF "%file%" STR_CMP "" AND FILE_EXISTS_IN_GAME "%file%" BEGIN
     COPY_EXISTING "%file%" override
-      LPF fl#valid RET valid END
+      LPF fl#valid RET valid failure END
     BUT_ONLY
   END ELSE WARN "WARNING: fl#valid cannot determine validity of non-existent file %file%"
 END
@@ -178,15 +183,16 @@ END
 DEFINE_PATCH_FUNCTION fl#valid#cre
   RET
     valid
+    failure
 BEGIN
-  LPF fl#valid#cre#signature RET valid version END
+  LPF fl#valid#cre#signature RET valid version failure END
   PATCH_FOR_EACH check IN
                  fl#valid#cre#size
                  fl#valid#cre#offsets
                  fl#valid#cre#structure#size
   BEGIN
     PATCH_IF valid BEGIN
-      LPF "%check%" STR_VAR version RET valid END
+      LPF "%check%" STR_VAR version RET valid failure END
     END
   END
 END
@@ -437,7 +443,9 @@ DEFINE_PATCH_FUNCTION fl#valid#cre#signature
   RET
     valid
     version
+    failure
 BEGIN
+  SPRINT failure ""
   LPF fl#valid#signature RET signature version END
   PATCH_IF "%signature%" STR_CMP "CRE " OR
            !("%version%" STRING_EQUAL "%fl#valid#cre#v10%" OR
@@ -446,6 +454,7 @@ BEGIN
              "%version%" STRING_EQUAL "%fl#valid#cre#v90%")
   BEGIN
     valid = 0
+    SPRINT failure "signature"
     LPF fl#valid#chat
       STR_VAR
         m = "WARNING: expected creature buffer does not have a valid signature"
@@ -458,11 +467,13 @@ DEFINE_PATCH_FUNCTION fl#valid#cre#size
     version = ""
   RET
     valid
+    failure
 BEGIN
   PATCH_MATCH "%version%" WITH
     "%fl#valid#cre#v10%" WHEN BUFFER_LENGTH < fl#valid#cre#v10#header_length
     BEGIN
       valid = 0
+      SPRINT failure "minimum size"
       LPF fl#valid#chat
         STR_VAR
           m = "WARNING: creature buffer V1.0 is less than required minimum size"
@@ -472,6 +483,7 @@ BEGIN
     "%fl#valid#cre#v12%" WHEN BUFFER_LENGTH < fl#valid#cre#v12#header_length
     BEGIN
       valid = 0
+      SPRINT failure "minimum size"
       LPF fl#valid#chat
         STR_VAR
           m = "WARNING: creature buffer V1.2 is less than required minimum size"
@@ -481,6 +493,7 @@ BEGIN
     "%fl#valid#cre#v22%" WHEN BUFFER_LENGTH < fl#valid#cre#v22#header_length
     BEGIN
       valid = 0
+      SPRINT failure "minimum size"
       LPF fl#valid#chat
         STR_VAR
           m = "WARNING: creature buffer V2.2 is less than required minimum size"
@@ -498,6 +511,7 @@ BEGIN
 
     DEFAULT
       valid = 1
+      SPRINT failure ""
   END
 END
 
@@ -508,13 +522,16 @@ DEFINE_PATCH_FUNCTION fl#valid#cre#offsets#check
     offset_array = ""
   RET
     valid
+    failure
 BEGIN
   valid = 1
+  SPRINT failure ""
   PHP_EACH "%offset_array%" AS start_offset => count_offset BEGIN
     READ_LONG start_offset start
     READ_LONG count_offset count
     PATCH_IF start < header_length BEGIN
       valid = 0
+      SPRINT failure "offset too low"
       LPF fl#valid#chat
         STR_VAR
           m = "WARNING: creature buffer has structure-start offset pointing into header"
@@ -522,6 +539,7 @@ BEGIN
     END
     PATCH_IF start > BUFFER_LENGTH BEGIN
       valid = 0
+      SPRINT failure "offset too high"
       LPF fl#valid#chat
         STR_VAR
           m = "WARNING: creature buffer has structure-start offtset pointing outside file length"
@@ -535,8 +553,10 @@ DEFINE_PATCH_FUNCTION fl#valid#cre#offsets
     version = ""
   RET
     valid
+    failure
 BEGIN
   valid = 1
+  SPRINT failure ""
   PATCH_MATCH "%version%" WITH
     "%fl#valid#cre#v10%"
     BEGIN
@@ -550,6 +570,7 @@ BEGIN
           offset_array = fl#valid#cre#v10#offsets
         RET
           valid
+          failure
       END
     END
 
@@ -580,6 +601,7 @@ BEGIN
           offset_array = fl#valid#cre#v22#offsets
         RET
           valid
+          failure
       END
     END
 
@@ -595,6 +617,7 @@ BEGIN
           offset_array = fl#valid#cre#v90#offsets
         RET
           valid
+          failure
       END
     END
 
@@ -607,6 +630,7 @@ DEFINE_PATCH_FUNCTION fl#valid#cre#structure#size
     version = ""
   RET
     valid
+    failure
 BEGIN
   PATCH_MATCH "%version%" WITH
     "%fl#valid#cre#v10%"
@@ -676,6 +700,7 @@ BEGIN
   END
   PATCH_IF size > BUFFER_LENGTH BEGIN
     valid = 0
+    SPRINT failure "missing bytes"
     LPF fl#valid#chat
       STR_VAR
         m = "WARNING: creature buffer has missing bytes"
@@ -683,6 +708,7 @@ BEGIN
   END
   PATCH_IF size < BUFFER_LENGTH BEGIN
     valid = 0
+    SPRINT failure "unreferenced bytes"
     LPF fl#valid#chat
       STR_VAR
         m = "WARNING: creature buffer has unreferenced bytes"
@@ -690,6 +716,7 @@ BEGIN
   END
   PATCH_IF size = BUFFER_LENGTH BEGIN
     valid = 1
+    SPRINT failure ""
   END
 END
 
@@ -704,15 +731,16 @@ END
 DEFINE_PATCH_FUNCTION fl#valid#itm
   RET
     valid
+    failure
 BEGIN
-  LPF fl#valid#itm#signature RET valid version END
+  LPF fl#valid#itm#signature RET valid version failure END
   PATCH_FOR_EACH check IN
                  fl#valid#itm#size
                  fl#valid#itm#offsets
                  fl#valid#itm#structure#size
   BEGIN
     PATCH_IF valid BEGIN
-      LPF "%check%" STR_VAR version RET valid END
+      LPF "%check%" STR_VAR version RET valid failure END
     END
   END
 END
@@ -751,7 +779,9 @@ DEFINE_PATCH_FUNCTION fl#valid#itm#signature
   RET
     valid
     version
+    failure
 BEGIN
+  SPRINT failure ""
   LPF fl#valid#signature RET signature version END
   PATCH_IF "%signature%" STR_CMP "ITM " OR
            !("%version%" STRING_EQUAL "%fl#valid#itm#v1%" OR
@@ -759,6 +789,7 @@ BEGIN
              "%version%" STRING_EQUAL "%fl#valid#itm#v20%")
   BEGIN
     valid = 0
+    SPRINT failure "signature"
     LPF fl#valid#chat STR_VAR m = "WARNING: expected item buffer does not have a valid signature" END
   END ELSE valid = 1
 END
@@ -768,28 +799,33 @@ DEFINE_PATCH_FUNCTION fl#valid#itm#size
     version = ""
   RET
     valid
+    failure
 BEGIN
   PATCH_MATCH "%version%" WITH
     "%fl#valid#itm#v1%" WHEN BUFFER_LENGTH < fl#valid#itm#v1#header_length
     BEGIN
-      valid  = 0
+      valid = 0
+      SPRINT failure "minimum size"
       LPF fl#valid#chat STR_VAR m = "WARNING: item buffer V1 is less than required minimum size" END
     END
 
     "%fl#valid#itm#v11%" WHEN BUFFER_LENGTH < fl#valid#itm#v11#header_length
     BEGIN
-      valid  = 0
+      valid = 0
+      SPRINT failure "minimum size"
       LPF fl#valid#chat STR_VAR m = "WARNING: item buffer V1.1 is less than required minimum size" END
     END
 
     "%fl#valid#itm#v20%" WHEN BUFFER_LENGTH < fl#valid#itm#v20#header_length
     BEGIN
       valid = 0
+      SPRINT failure "minimum size"
       LPF fl#valid#chat STR_VAR m = "WARNING: item buffer V2.0 is less than required minimum size" END
     END
 
     DEFAULT
       valid = 1
+      SPRINT failure ""
   END
 END
 
@@ -800,13 +836,16 @@ DEFINE_PATCH_FUNCTION fl#valid#itm#offsets#check
     offset_array = ""
   RET
     valid
+    failure
 BEGIN
   valid = 1
+  SPRINT failure ""
   PHP_EACH "%offset_array%" AS start_offset => count_offset BEGIN
     READ_LONG  start_offset start
     READ_SHORT count_offset count
     PATCH_IF start < header_length BEGIN
       valid = 0
+      SPRINT failure "offset too low"
       LPF fl#valid#chat
         STR_VAR
           m = "WARNING: item buffer has structure-start offset pointing into header"
@@ -814,6 +853,7 @@ BEGIN
     END
     PATCH_IF start > BUFFER_LENGTH BEGIN
       valid = 0
+      SPRINT failure "offset too high"
       LPF fl#valid#chat
         STR_VAR
           m = "WARNING: item buffer has structure-start offset pointing outside file length"
@@ -827,8 +867,10 @@ DEFINE_PATCH_FUNCTION fl#valid#itm#offsets
     version = ""
   RET
     valid
+    failure
 BEGIN
   valid = 1
+  SPRINT failure ""
   PATCH_MATCH "%version%" WITH
     "%fl#valid#itm#v1%"
     BEGIN
@@ -839,6 +881,7 @@ BEGIN
           offset_array = fl#valid#itm#offsets
         RET
           valid
+          failure
       END
     END
 
@@ -851,6 +894,7 @@ BEGIN
           offset_array = fl#valid#itm#offsets
         RET
           valid
+          failure
       END
     END
 
@@ -863,6 +907,7 @@ BEGIN
           offset_array = fl#valid#itm#offsets
         RET
           valid
+          failure
       END
     END
 
@@ -875,6 +920,7 @@ DEFINE_PATCH_FUNCTION fl#valid#itm#structure#size
     version = ""
   RET
     valid
+    failure
 BEGIN
   PATCH_MATCH "%version%" WITH
     "%fl#valid#itm#v1%"
@@ -927,6 +973,7 @@ BEGIN
   END
   PATCH_IF size > BUFFER_LENGTH BEGIN
     valid = 0
+    SPRINT failure "missing bytes"
     LPF fl#valid#chat
       STR_VAR
         m = "WARNING: item buffer has missing bytes"
@@ -934,6 +981,7 @@ BEGIN
   END
   PATCH_IF size < BUFFER_LENGTH BEGIN
     valid = 0
+    SPRINT failure "unreferenced bytes"
     LPF fl#valid#chat
       STR_VAR
         m = "WARNING: item buffer has unreferenced bytes"
@@ -955,15 +1003,16 @@ END
 DEFINE_PATCH_FUNCTION fl#valid#spl
   RET
     valid
+    failure
 BEGIN
-  LPF fl#valid#spl#signature RET valid version END
+  LPF fl#valid#spl#signature RET valid version failure END
   PATCH_FOR_EACH check IN
                  fl#valid#spl#size
                  fl#valid#spl#offsets
                  fl#valid#spl#structure#size
   BEGIN
     PATCH_IF valid BEGIN
-      LPF "%check%" STR_VAR version RET valid END
+      LPF "%check%" STR_VAR version RET valid failure END
     END
   END
 END
@@ -1005,13 +1054,16 @@ DEFINE_PATCH_FUNCTION fl#valid#spl#signature
   RET
     valid
     version
+    failure
 BEGIN
+  SPRINT failure ""
   LPF fl#valid#signature RET signature version END
   PATCH_IF "%signature%" STR_CMP "SPL " OR
            !("%version%" STRING_EQUAL "%fl#valid#spl#v1%" OR
              "%version%" STRING_EQUAL "%fl#valid#spl#v20%")
   BEGIN
     valid = 0
+    SPRINT failure "signature"
     LPF fl#valid#chat STR_VAR m = "WARNING: expected spell buffer does not have a valid signature" END
   END ELSE valid = 1
 END
@@ -1021,22 +1073,26 @@ DEFINE_PATCH_FUNCTION fl#valid#spl#size
     version = ""
   RET
     valid
+    failure
 BEGIN
   PATCH_MATCH "%version%" WITH
     "%fl#valid#spl#v1%" WHEN BUFFER_LENGTH < fl#valid#spl#v1#header_length
     BEGIN
       valid = 0
+      SPRINT failure "minimum size"
       LPF fl#valid#chat STR_VAR m = "WARNING: spell buffer V1 is less than required minimum size" END
     END
 
     "%fl#valid#spl#v20%" WHEN BUFFER_LENGTH < fl#valid#spl#v20#header_length
     BEGIN
       valid = 0
+      SPRINT failure "minimum size"
       LPF fl#valid#chat STR_VAR m = "WARNING: spell buffer V2.0 is less than required minimum size" END
     END
 
     DEFAULT
       valid = 1
+      SPRINT failure ""
   END
 END
 
@@ -1047,13 +1103,16 @@ DEFINE_PATCH_FUNCTION fl#valid#spl#offsets#check
     offset_array = ""
   RET
     valid
+    failure
 BEGIN
   valid = 1
+  SPRINT failure ""
   PHP_EACH "%offset_array%" AS start_offset => count_offset BEGIN
     READ_LONG  start_offset start
     READ_SHORT count_offset count
     PATCH_IF start < header_length BEGIN
       valid = 0
+      SPRINT failure "offset too low"
       LPF fl#valid#chat
         STR_VAR
           m = "WARNING: spell buffer has structure-start offset pointing into header"
@@ -1061,6 +1120,7 @@ BEGIN
     END
     PATCH_IF start > BUFFER_LENGTH BEGIN
       valid = 0
+      SPRINT failure "offset too high"
       LPF fl#valid#chat
         STR_VAR
           m = "WARNING: spell buffer has structure-start offset pointing outside file length"
@@ -1074,8 +1134,10 @@ DEFINE_PATCH_FUNCTION fl#valid#spl#offsets
     version = ""
   RET
     valid
+    failure
 BEGIN
   valid = 1
+  SPRINT failure ""
   PATCH_MATCH "%version%" WITH
     "%fl#valid#spl#v1%"
     BEGIN
@@ -1086,6 +1148,7 @@ BEGIN
           offset_array = fl#valid#spl#offsets
         RET
           valid
+          failure
       END
     END
 
@@ -1098,6 +1161,7 @@ BEGIN
           offset_array = fl#valid#spl#offsets
         RET
           valid
+          failure
       END
     END
 
@@ -1110,6 +1174,7 @@ DEFINE_PATCH_FUNCTION fl#valid#spl#structure#size
     version = ""
   RET
     valid
+    failure
 BEGIN
   PATCH_MATCH "%version%" WITH
     "%fl#valid#spl#v1%"
@@ -1147,6 +1212,7 @@ BEGIN
   END
   PATCH_IF size > BUFFER_LENGTH BEGIN
     valid = 0
+    SPRINT failure "missing bytes"
     LPF fl#valid#chat
       STR_VAR
         m = "WARNING: spell buffer has missing bytes"
@@ -1154,6 +1220,7 @@ BEGIN
   END
   PATCH_IF size < BUFFER_LENGTH BEGIN
     valid = 0
+    SPRINT failure "unreferenced bytes"
     LPF fl#valid#chat
       STR_VAR
         m = "WARNING: spell buffer has unreferenced bytes"
@@ -1161,5 +1228,6 @@ BEGIN
   END
   PATCH_IF size = BUFFER_LENGTH BEGIN
     valid = 1
+    SPRINT failure ""
   END
 END
