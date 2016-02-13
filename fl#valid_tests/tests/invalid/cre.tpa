@@ -13,6 +13,8 @@ BEGIN
     "dmghd" => "Plain CRE V1.0 with deleted item slots and 0x20 bytes deleted at offset 0x10"
     "0off"  => "Plain CRE V1.0 with zeroed effect offset and 0 effects"
     "wrngoff" => "Plain CRE V1.0 with 0xc deducted from offset at 0x2a8"
+    "aataqah1" => "Valid Aataqah with incorrctly updated offsets; no effects, but effects offset is 0x46c when it should be 0x480"
+    "aataqah2" => "aataqah1 with 1 effect added; no prior reindexing of the structure; structure overlap and unreferenced bytes, but a correct number of bytes"
   END
 
   ACTION_PHP_EACH invalid#cre AS file => desc BEGIN
