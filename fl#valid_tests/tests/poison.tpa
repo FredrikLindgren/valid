@@ -1,11 +1,11 @@
 ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid_tests#poison#invalid BEGIN
-  ~%MOD_FOLDER%/tests/valid/cre/crev10.cre~, "invalid#cre", "Valid CRE V1.0" => ~%MOD_FOLDER%/tests/invalid/cre~
-  ~%MOD_FOLDER%/tests/valid/itm/itmv1.itm~, "invalid#itm", "Valid ITM V1" => ~%MOD_FOLDER%/tests/invalid/itm~
-  ~%MOD_FOLDER%/tests/valid/spl/splv1.spl~, "invalid#spl", "Valid SPL V1" => ~%MOD_FOLDER%/tests/invalid/spl~
+  ~%MOD_FOLDER%/tests/valid/cre/crev10.cre~, "invalid#cre", "Valid CRE V1.0" => ~%MOD_FOLDER%/tests/invalid/cre/crev10.cre~
+  ~%MOD_FOLDER%/tests/valid/itm/itmv1.itm~, "invalid#itm", "Valid ITM V1" => ~%MOD_FOLDER%/tests/invalid/itm/itmv1.itm~
+  ~%MOD_FOLDER%/tests/valid/spl/splv1.spl~, "invalid#spl", "Valid SPL V1" => ~%MOD_FOLDER%/tests/invalid/spl/splv1.spl~
 END
 
 ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid_tests#poison#valid BEGIN
-  ~%MOD_FOLDER%/tests/invalid/cre/null.cre~, "valid#cre", "0-byte file, CRE" => ~%MOD_FOLDER%/tests/valid/cre~
+  ~%MOD_FOLDER%/tests/invalid/cre/null.cre~, "valid#cre", "0-byte file, CRE" => ~%MOD_FOLDER%/tests/valid/cre/null.cre~
   ~%MOD_FOLDER%/tests/invalid/cre/null.cre~, "valid#itm", "0-byte file, ITM" => ~%MOD_FOLDER%/tests/valid/itm/null.itm~
   ~%MOD_FOLDER%/tests/invalid/cre/null.cre~, "valid#spl", "0-byte file, SPL" => ~%MOD_FOLDER%/tests/valid/spl/null.spl~
 END
