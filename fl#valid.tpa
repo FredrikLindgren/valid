@@ -534,7 +534,7 @@ BEGIN
       SPRINT failure "offset too low"
       LPF fl#valid#chat
         STR_VAR
-          m = "WARNING: creature buffer has structure-start offset pointing into header"
+          m = EVAL "WARNING: creature buffer has structure-start offset at %start_offset% pointing into header"
       END
     END
     PATCH_IF start > BUFFER_LENGTH BEGIN
@@ -542,7 +542,7 @@ BEGIN
       SPRINT failure "offset too high"
       LPF fl#valid#chat
         STR_VAR
-          m = "WARNING: creature buffer has structure-start offtset pointing outside file length"
+          m = EVAL "WARNING: creature buffer has structure-start offset at %start_offset% pointing outside file length"
       END
     END
   END
