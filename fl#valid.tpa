@@ -190,6 +190,7 @@ BEGIN
                  fl#valid#cre#size
                  fl#valid#cre#offsets
                  fl#valid#cre#structure#size
+                 // fl#valid#cre#structure#contiguousness
   BEGIN
     PATCH_IF valid BEGIN
       LPF "%check%" STR_VAR version RET valid failure END
