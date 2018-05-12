@@ -14,6 +14,7 @@ BEGIN
     "wrngoff", "offset too low" => "Plain SPL V1 with 0x30 deducted off the effect offset"
     "wrngoff2", "offset too high" => "Plain SPL V1 with 0x30 added to the effects offset"
     "spwi304", "more bytes" => "Fireball, BG2 Fixpack V11, alpha 1, with 1 deducted off extended-effect count on the 3rd ability"
+    "spwi618", "hole" => "Spell Deflection from BG:EE 2.5.15.1 after DS a5f3287b39c29c8a1188def0c19a2deec7676137"
   END
 
   ACTION_PHP_EACH invalid#spl AS key => desc BEGIN
