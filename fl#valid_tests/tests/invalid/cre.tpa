@@ -14,8 +14,8 @@ BEGIN
     "0off", "offset too low"  => "Plain CRE V1.0 with zeroed effect offset and 0 effects"
     "wrngoff", "offset too low" => "Plain CRE V1.0 with 0xc deducted from offset at 0x2a8"
     "wrngoff2", "offset too high" => "Plain CRE V1.0 with 0x10c added to effects offset; 0 effects"
-    "aataqah1", "don't know yet" => "Valid Aataqah with incorrctly updated offsets; no effects, but effects offset is 0x46c when it should be 0x480"
-    "aataqah2", "don't know yet" => "aataqah1 with 1 effect added; no prior reindexing of the structure; structure overlap and unreferenced bytes, but a correct number of bytes"
+    //"aataqah1", "don't know yet" => "Valid Aataqah with incorrctly updated offsets; one effect, effects offset is 0x46c but next structure offset is 0x588 when it should be 0x480"
+    //"aataqah2", "don't know yet" => "aataqah1 with 1 effect added; no prior reindexing of the structure; structure overlap and unreferenced bytes, but a correct number of bytes"
   END
 
   ACTION_PHP_EACH invalid#cre AS key => desc BEGIN
