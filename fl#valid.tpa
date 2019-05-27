@@ -35,6 +35,8 @@ DEFINE_PATCH_FUNCTION fl#valid
 BEGIN
   LPF fl#valid#signature RET signature END
   PATCH_MATCH "%signature%" WITH
+    "AREA" BEGIN LPF fl#valid#are RET valid failure END END
+
     "CRE " BEGIN LPF fl#valid#cre RET valid failure END END
 
     "ITM " BEGIN LPF fl#valid#itm RET valid failure END END
@@ -109,6 +111,43 @@ END
 OUTER_SET fl#valid#eff#v1#header_length = 0x30
 OUTER_SET fl#valid#eff#v2#header_length = 0x108
 
+DEFINE_PATCH_FUNCTION fl#valid#offsets
+  INT_VAR
+    header_length = 0
+  STR_VAR
+    offset_array = ""
+    whitelist_null_array = ""
+    buffer_type = ""
+  RET
+    valid
+    failure
+BEGIN
+  valid = 1
+  SPRINT failure ""
+  PHP_EACH "%offset_array%" AS start_offset => _ BEGIN
+    READ_LONG  start_offset start
+    PATCH_IF start < header_length &&
+             !VARIABLE_IS_SET $EVAL "%whitelist_null_array%"("%start_offset%")
+    BEGIN
+      valid = 0
+      SPRINT failure "offset too low"
+      LPF fl#valid#chat
+        STR_VAR
+          m = EVAL "WARNING: %buffer_type% buffer has structure-start offset pointing into header"
+      END
+    END
+    PATCH_IF start > BUFFER_LENGTH
+    BEGIN
+      valid = 0
+      SPRINT failure "offset too high"
+      LPF fl#valid#chat
+        STR_VAR
+          m = EVAL "WARNING: %buffer_type% buffer has structure-start offset pointing outside file length"
+      END
+    END
+  END
+END
+
 DEFINE_PATCH_FUNCTION fl#valid#structure#sum
   INT_VAR
     size = 0
@@ -169,6 +208,428 @@ BEGIN
       END
       size += extended_count * extended_size
     END
+  END
+END
+
+DEFINE_PATCH_FUNCTION fl#valid#structure#size_check
+  INT_VAR
+    size = 0
+  STR_VAR
+    buffer_type = ""
+  RET
+    valid
+    failure
+BEGIN
+  PATCH_IF size > BUFFER_LENGTH BEGIN
+    valid = 0
+    SPRINT failure "fewer bytes"
+    buff = BUFFER_LENGTH
+    LPF fl#valid#chat
+      STR_VAR
+        m = EVAL "WARNING: %buffer_type% buffer has fewer bytes than expected"
+    END
+  END
+  PATCH_IF size < BUFFER_LENGTH BEGIN
+    valid = 0
+    SPRINT failure "more bytes"
+    LPF fl#valid#chat
+      STR_VAR
+        m = EVAL "WARNING: %buffer_type% buffer has more bytes than expected"
+    END
+  END
+  PATCH_IF size = BUFFER_LENGTH BEGIN
+    valid = 1
+    SPRINT failure ""
+  END
+END
+
+/*********************************************************************
+ * AREA
+ ********************************************************************/
+
+/*
+ * Determines if the current buffer is a valid area.
+ * Return boolean vaild
+ */
+DEFINE_PATCH_FUNCTION fl#valid#are
+  RET
+    valid
+    failure
+BEGIN
+  LPF fl#valid#are#signature RET valid version failure END
+  PATCH_FOR_EACH check IN
+                 fl#valid#are#size
+                 fl#valid#are#offsets
+                 fl#valid#are#structure#size
+  BEGIN
+    PATCH_IF valid BEGIN
+      LPF "%check%" STR_VAR version RET valid failure END
+    END
+  END
+END
+
+OUTER_SPRINT fl#valid#are#v10 "V1.0"
+OUTER_SPRINT fl#valid#are#v91 "V9.1"
+
+OUTER_SET fl#valid#are#v10#header_length = 0x11c
+OUTER_SET fl#valid#are#v91#header_length = 0x12c
+OUTER_SET fl#valid#are#lengths#songs = 0x90
+OUTER_SET fl#valid#are#lengths#rests = 0xe4
+
+ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid#are#v10#offsets BEGIN
+  0x54 => 0x58
+  0x5c => 0x5a
+  0x60 => 0x64
+  0x68 => 0x6c
+  0x70 => 0x74
+  0x78 => 0x76
+  0x7c => 0x80
+  0x84 => 0x82
+  0x88 => 0x8c
+  0x90 => 0x92
+  0xa0 => 0x9c // explored bitmap; possibly needs to be handled separately
+  0xa8 => 0xa4
+  0xb0 => 0xac
+  0xb8 => 0xb4
+  // PST and remaining offsets are handled at run-time
+END
+
+DEFINE_PATCH_MACRO fl#valid#are#v10#offsets#runtime BEGIN
+  PATCH_IF ENGINE_IS pst BEGIN
+    // add offsets for PST-version of AREA V1.0
+    DEFINE_ASSOCIATIVE_ARRAY fl#valid#are#v10#offsets BEGIN
+      0xc8 => 0xcc
+    END
+    DEFINE_ASSOCIATIVE_ARRAY fl#valid#are#v10#offsets#whitelist_null BEGIN
+      0xc8 => _ // automap notes
+    END
+  END ELSE BEGIN
+    // add offsets for non-PST-version of AREA V1.0
+    DEFINE_ASSOCIATIVE_ARRAY fl#valid#are#v10#offsets BEGIN
+      0xc4 => 0xc8
+      0xcc => 0xd0
+    END
+  END
+END
+
+ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid#are#v10#offsets#whitelist_null BEGIN
+  0x90 => _ // tiled object flags
+  0xc4 => _ // automap notes
+  0xcc => _ // projectile traps
+END
+
+ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid#are#v91#offsets BEGIN
+  0x64 => 0x68
+  0x6c => 0x6a
+  0x70 => 0x74
+  0x78 => 0x7c
+  0x80 => 0x84
+  0x88 => 0x86
+  0x8c => 0x90
+  0x94 => 0x92
+  0x98 => 0x9c
+  0xa0 => 0xa2
+  0xb0 => 0xac // explored bitmap
+  0xb8 => 0xb4
+  0xc0 => 0xbc
+  0xc8 => 0xc4
+  0xd4 => 0xd8
+END
+
+ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid#are#v91#offsets#whitelist_null BEGIN
+  0xa0 => _ // tiled object flags
+  0xd4 => _ // automap notes
+END
+
+ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid#are#v10#lengths BEGIN
+  0, 0x58 => 0x110 // actor
+  0, 0x5a => 0xc4 // region
+  0, 0x64 => 0xc8 // spawn point
+  0, 0x6c => 0x68 // entrance
+  0, 0x74 => 0xc0 // container
+  0, 0x76 => 0x14 // item
+  0, 0x80 => 0x4 // vertex
+  0, 0x82 => 0xd4 // ambient
+  0, 0x8c => 0x50 // variable
+  0, 0x92 => 0 // FIXME: how long are these?; tiled object flag
+  0, 0x9c => 0 // FIXME; explored bitmap
+  0, 0xa4 => 0xc8 // door
+  0, 0xac => 0x4c // animation
+  0, 0xb4 => 0x6c // tiled object
+  0, 0xbc => 0x90 // song entry; no count offset
+  0, 0xc0 => 0xe4 // rest interruption; no count offset
+  // PST and remaining lengths are handled at runtime
+END
+
+DEFINE_PATCH_MACRO fl#valid#are#v10#lengths#runtime BEGIN
+  PATCH_IF ENGINE_IS pst BEGIN
+    // add structure lengths for PST-version of AREA V1.0
+    DEFINE_ASSOCIATIVE_ARRAY fl#valid#are#v10#lengths BEGIN
+      0, 0xcc => 0x214 // automap note
+    END
+  END ELSE BEGIN
+    // add structure lengths for non-PST-version of AREA V1.0
+    DEFINE_ASSOCIATIVE_ARRAY fl#valid#are#v10#lengths BEGIN
+      0, 0xc8 => 0x34 // automap note
+      0, 0xd0 => 0x1c // projectile trap
+    END
+  END
+END
+
+ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid#are#v91#lengths BEGIN
+  0, 0x68 => 0x110 // actor
+  0, 0x6a => 0xc4 // region
+  0, 0x74 => 0xc8 // spawn point
+  0, 0x7c => 0x68 // entrance
+  0, 0x84 => 0xc0 // container
+  0, 0x86 => 0x14 // item
+  0, 0x90 => 0x4 // vertex
+  0, 0x92 => 0xd4 // ambient
+  0, 0x9c => 0x50 // variable
+  0, 0xa2 => 0 // FIXME: how long are these?; tiled object flag
+  0, 0xac => 0 // FIXME; explored bitmap
+  0, 0xb4 => 0xc8 // door
+  0, 0xbc => 0x4c // animation
+  0, 0xc4 => 0x6c // tiled object
+  0, 0xcc => 0x90 // song entry; no count offset
+  0, 0xd0 => 0xe4 // rest interruption; no count offset
+  0, 0xd8 => 0x46 // automap note
+END
+
+ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid#are#v10#read_lengths BEGIN
+  0, 0x54 => 4
+  0, 0x58 => 2
+  0, 0x5a => 2
+  0, 0x5c => 4
+  0, 0x60 => 4
+  0, 0x64 => 4
+  0, 0x68 => 4
+  0, 0x6c => 4
+  0, 0x70 => 4
+  0, 0x74 => 2
+  0, 0x76 => 2
+  0, 0x78 => 4
+  0, 0x7c => 4
+  0, 0x80 => 2
+  0, 0x82 => 2
+  0, 0x84 => 4
+  0, 0x88 => 4
+  0, 0x8c => 4
+  0, 0x90 => 2
+  0, 0x92 => 2
+  0, 0x9c => 4
+  0, 0xa0 => 4
+  0, 0xa4 => 4
+  0, 0xa8 => 4
+  0, 0xac => 4
+  0, 0xb0 => 4
+  0, 0xb4 => 4
+  0, 0xb8 => 4
+  0, 0xbc => 4
+  0, 0xc0 => 4
+  0, 0xc4 => 4
+  0, 0xc8 => 4
+  0, 0xcc => 4
+  0, 0xd0 => 4
+END
+
+ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid#are#v91#read_lengths BEGIN
+  0, 0x64 => 4
+  0, 0x68 => 2
+  0, 0x6a => 2
+  0, 0x6c => 4
+  0, 0x70 => 4
+  0, 0x74 => 4
+  0, 0x78 => 4
+  0, 0x7c => 4
+  0, 0x80 => 4
+  0, 0x84 => 2
+  0, 0x86 => 2
+  0, 0x88 => 4
+  0, 0x8c => 4
+  0, 0x90 => 2
+  0, 0x92 => 2
+  0, 0x94 => 4
+  0, 0x98 => 4
+  0, 0x9c => 4
+  0, 0xa0 => 2
+  0, 0xa2 => 2
+  0, 0xac => 4
+  0, 0xb0 => 4
+  0, 0xb4 => 4
+  0, 0xb8 => 4
+  0, 0xbc => 4
+  0, 0xc0 => 4
+  0, 0xc4 => 4
+  0, 0xc8 => 4
+  0, 0xcc => 4
+  0, 0xd0 => 4
+  0, 0xd4 => 4
+  0, 0xd8 => 4
+END
+
+DEFINE_PATCH_FUNCTION fl#valid#are#signature
+  RET
+    valid
+    version
+    failure
+BEGIN
+  SPRINT failure ""
+  LPF fl#valid#signature RET signature version END
+  PATCH_IF "%signature%" STR_CMP "AREA" OR
+           !("%version%" STRING_EQUAL "%fl#valid#are#v10%" OR
+             "%version%" STRING_EQUAL "%fl#valid#are#v91%")
+  BEGIN
+    valid = 0
+    SPRINT failure "signature"
+    LPF fl#valid#chat
+      STR_VAR
+        m = "WARNING: expected area buffer does not have a valid signature"
+    END
+  END ELSE valid = 1
+END
+
+DEFINE_PATCH_FUNCTION fl#valid#are#size
+  STR_VAR
+    version = ""
+  RET
+    valid
+    failure
+BEGIN
+  PATCH_MATCH "%version%" WITH
+    "%fl#valid#are#v10%" WHEN BUFFER_LENGTH < fl#valid#are#v10#header_length +
+                                              fl#valid#are#lengths#songs +
+                                              fl#valid#are#lengths#rests
+    BEGIN
+      valid = 0
+      SPRINT failure "minimum size"
+      LPF fl#valid#chat
+        STR_VAR
+          m = "WARNING: area buffer V1.0 is less than required minimum size"
+      END
+    END
+
+    "%fl#valid#are#v91%" WHEN BUFFER_LENGTH < fl#valid#are#v91#header_length +
+                                              fl#valid#are#lengths#songs +
+                                              fl#valid#are#lengths#rests
+    BEGIN
+      valid = 0
+      SPRINT failure "minimum size"
+      LPF fl#valid#chat
+        STR_VAR
+          m = "WARNING: area buffer V9.1 is less than required minimum size"
+      END
+    END
+
+    DEFAULT
+      valid = 1
+      SPRINT failure ""
+  END
+END
+
+DEFINE_PATCH_FUNCTION fl#valid#are#offsets
+  STR_VAR
+    version = ""
+  RET
+    valid
+    failure
+BEGIN
+  valid = 1
+  SPRINT failure ""
+  PATCH_MATCH "%version%" WITH
+    "%fl#valid#are#v10%"
+    BEGIN
+      DEFINE_ASSOCIATIVE_ARRAY fl#valid#are#v10#offsets BEGIN
+        0xbc => 0xbc // song entries; no counts offset
+        0xc0 => 0xc0 // rest interruptions; no counts offset
+      END
+      LPM fl#valid#are#v10#offsets#runtime
+      LPF fl#valid#offsets
+        INT_VAR
+          header_length = fl#valid#are#v10#header_length
+        STR_VAR
+          offset_array = fl#valid#are#v10#offsets
+          // FIXME: read_lengths; one is a word
+          whitelist_null_array = fl#valid#are#v10#offsets#whitelist_null
+          buffer_type = area
+        RET
+          valid
+          failure
+      END
+    END
+
+    "%fl#valid#are#v91%"
+    BEGIN
+      DEFINE_ASSOCIATIVE_ARRAY fl#valid#are#v91#offsets BEGIN
+        0xcc => 0xcc // song entries; no counts offset
+        0xd0 => 0xd0 // rest interruptions; no counts offset
+      END
+      LPF fl#valid#offsets
+        INT_VAR
+          header_length = fl#valid#are#v91#header_length
+        STR_VAR
+          offset_array = fl#valid#are#v91#offsets
+          whitelist_null_array = fl#valid#are#v91#offsets#whitelist_null
+          buffer_type = area
+        RET
+          valid
+          failure
+      END
+    END
+
+    DEFAULT
+  END
+END
+
+DEFINE_PATCH_FUNCTION fl#valid#are#structure#size
+  STR_VAR
+    version = ""
+  RET
+    valid
+    failure
+BEGIN
+  PATCH_MATCH "%version%" WITH
+    "%fl#valid#are#v10%"
+    BEGIN
+      LPM fl#valid#are#v10#offsets#runtime
+      LPM fl#valid#are#v10#lengths#runtime
+      LPF fl#valid#structure#sum
+        INT_VAR
+          size = fl#valid#are#v10#header_length + 0x90 + 0xe4 // FIXME: hack
+        STR_VAR
+          offset_array = fl#valid#are#v10#offsets
+          size_array = fl#valid#are#v10#lengths
+          read_length_array = fl#valid#are#v10#read_lengths
+        RET
+          size
+      END
+    END
+
+    "%fl#valid#are#v91%"
+    BEGIN
+      LPF fl#valid#structure#sum
+        INT_VAR
+          size = fl#valid#are#v91#header_length + 0x90 + 0xe4 // FIXME: hack
+        STR_VAR
+          offset_array = fl#valid#are#v91#offsets
+          size_array = fl#valid#are#v91#lengths
+          read_length_array = fl#valid#are#v91#read_lengths
+        RET
+          size
+      END
+    END
+
+    DEFAULT
+      size = 0
+  END
+  LPF fl#valid#structure#size_check
+    INT_VAR
+      size
+    STR_VAR
+      buffer_type = area
+    RET
+      valid
+      failure
   END
 END
 
@@ -516,39 +977,6 @@ BEGIN
   END
 END
 
-DEFINE_PATCH_FUNCTION fl#valid#cre#offsets#check
-  INT_VAR
-    header_length = 0
-  STR_VAR
-    offset_array = ""
-  RET
-    valid
-    failure
-BEGIN
-  valid = 1
-  SPRINT failure ""
-  PHP_EACH "%offset_array%" AS start_offset => count_offset BEGIN
-    READ_LONG start_offset start
-    READ_LONG count_offset count
-    PATCH_IF start < header_length BEGIN
-      valid = 0
-      SPRINT failure "offset too low"
-      LPF fl#valid#chat
-        STR_VAR
-          m = EVAL "WARNING: creature buffer has structure-start offset at %start_offset% pointing into header"
-      END
-    END
-    PATCH_IF start > BUFFER_LENGTH BEGIN
-      valid = 0
-      SPRINT failure "offset too high"
-      LPF fl#valid#chat
-        STR_VAR
-          m = EVAL "WARNING: creature buffer has structure-start offset at %start_offset% pointing outside file length"
-      END
-    END
-  END
-END
-
 DEFINE_PATCH_FUNCTION fl#valid#cre#offsets
   STR_VAR
     version = ""
@@ -564,11 +992,12 @@ BEGIN
       DEFINE_ASSOCIATIVE_ARRAY fl#valid#cre#v10#offsets BEGIN
         0x2b8 => 0x2c0 // Add the item slots offset to the array
       END
-      LPF fl#valid#cre#offsets#check
+      LPF fl#valid#offsets
         INT_VAR
           header_length = fl#valid#cre#v10#header_length
         STR_VAR
           offset_array = fl#valid#cre#v10#offsets
+          buffer_type = creature
         RET
           valid
           failure
@@ -580,11 +1009,12 @@ BEGIN
       DEFINE_ASSOCIATIVE_ARRAY fl#valid#cre#v12#offsets BEGIN
         0x35c => 0x364 // Add the item slots offset to the array
       END
-      LPF fl#valid#cre#offsets#check
+      LPF fl#valid#offsets
         INT_VAR
           header_length = fl#valid#cre#v12#header_length
         STR_VAR
           offset_array = fl#valid#cre#v12#offsets
+          buffer_type = creature
         RET
           valid
       END
@@ -595,11 +1025,12 @@ BEGIN
       DEFINE_ASSOCIATIVE_ARRAY fl#valid#cre#v22#offsets BEGIN
         0x612 => 0x61a // Add the item slots offset to the array
       END
-      LPF fl#valid#cre#offsets#check
+      LPF fl#valid#offsets
         INT_VAR
           header_length = fl#valid#cre#v22#header_length
         STR_VAR
           offset_array = fl#valid#cre#v22#offsets
+          buffer_type = creature
         RET
           valid
           failure
@@ -611,11 +1042,12 @@ BEGIN
       DEFINE_ASSOCIATIVE_ARRAY fl#valid#cre#v90#offsets BEGIN
         0x320 => 0x328 // Add the item slots offset to the array
       END
-      LPF fl#valid#cre#offsets#check
+      LPF fl#valid#offsets
         INT_VAR
           header_length = fl#valid#cre#v90#header_length
         STR_VAR
           offset_array = fl#valid#cre#v90#offsets
+          buffer_type = creature
         RET
           valid
           failure
@@ -699,25 +1131,14 @@ BEGIN
     DEFAULT
       size = 0
   END
-  PATCH_IF size > BUFFER_LENGTH BEGIN
-    valid = 0
-    SPRINT failure "fewer bytes"
-    LPF fl#valid#chat
-      STR_VAR
-        m = "WARNING: creature buffer has fewer bytes than expected"
-    END
-  END
-  PATCH_IF size < BUFFER_LENGTH BEGIN
-    valid = 0
-    SPRINT failure "more bytes"
-    LPF fl#valid#chat
-      STR_VAR
-        m = "WARNING: creature buffer has more bytes than expected"
-    END
-  END
-  PATCH_IF size = BUFFER_LENGTH BEGIN
-    valid = 1
-    SPRINT failure ""
+  LPF fl#valid#structure#size_check
+    INT_VAR
+      size
+    STR_VAR
+      buffer_type = creature
+    RET
+      valid
+      failure
   END
 END
 
@@ -830,39 +1251,6 @@ BEGIN
   END
 END
 
-DEFINE_PATCH_FUNCTION fl#valid#itm#offsets#check
-  INT_VAR
-    header_length = 0
-  STR_VAR
-    offset_array = ""
-  RET
-    valid
-    failure
-BEGIN
-  valid = 1
-  SPRINT failure ""
-  PHP_EACH "%offset_array%" AS start_offset => count_offset BEGIN
-    READ_LONG  start_offset start
-    READ_SHORT count_offset count
-    PATCH_IF start < header_length BEGIN
-      valid = 0
-      SPRINT failure "offset too low"
-      LPF fl#valid#chat
-        STR_VAR
-          m = "WARNING: item buffer has structure-start offset pointing into header"
-      END
-    END
-    PATCH_IF start > BUFFER_LENGTH BEGIN
-      valid = 0
-      SPRINT failure "offset too high"
-      LPF fl#valid#chat
-        STR_VAR
-          m = "WARNING: item buffer has structure-start offset pointing outside file length"
-      END
-    END
-  END
-END
-
 DEFINE_PATCH_FUNCTION fl#valid#itm#offsets
   STR_VAR
     version = ""
@@ -875,11 +1263,12 @@ BEGIN
   PATCH_MATCH "%version%" WITH
     "%fl#valid#itm#v1%"
     BEGIN
-      LPF fl#valid#itm#offsets#check
+      LPF fl#valid#offsets
         INT_VAR
           header_length = fl#valid#itm#v1#header_length
         STR_VAR
           offset_array = fl#valid#itm#offsets
+          buffer_type = item
         RET
           valid
           failure
@@ -888,11 +1277,12 @@ BEGIN
 
     "%fl#valid#itm#v11%"
     BEGIN
-      LPF fl#valid#itm#offsets#check
+      LPF fl#valid#offsets
         INT_VAR
           header_length = fl#valid#itm#v11#header_length
         STR_VAR
           offset_array = fl#valid#itm#offsets
+          buffer_type = item
         RET
           valid
           failure
@@ -901,11 +1291,12 @@ BEGIN
 
     "%fl#valid#itm#v20%"
     BEGIN
-      LPF fl#valid#itm#offsets#check
+      LPF fl#valid#offsets
         INT_VAR
           header_length = fl#valid#itm#v20#header_length
         STR_VAR
           offset_array = fl#valid#itm#offsets
+          buffer_type = item
         RET
           valid
           failure
@@ -972,24 +1363,14 @@ BEGIN
     DEFAULT
       size = 0
   END
-  PATCH_IF size > BUFFER_LENGTH BEGIN
-    valid = 0
-    SPRINT failure "fewer bytes"
-    LPF fl#valid#chat
-      STR_VAR
-        m = "WARNING: item buffer has fewer bytes than expected"
-    END
-  END
-  PATCH_IF size < BUFFER_LENGTH BEGIN
-    valid = 0
-    SPRINT failure "more bytes"
-    LPF fl#valid#chat
-      STR_VAR
-        m = "WARNING: item buffer has more bytes than expected"
-    END
-  END
-  PATCH_IF size = BUFFER_LENGTH BEGIN
-    valid = 1
+  LPF fl#valid#structure#size_check
+    INT_VAR
+      size
+    STR_VAR
+      buffer_type = item
+    RET
+      valid
+      failure
   END
 END
 
@@ -1097,39 +1478,6 @@ BEGIN
   END
 END
 
-DEFINE_PATCH_FUNCTION fl#valid#spl#offsets#check
-  INT_VAR
-    header_length = 0
-  STR_VAR
-    offset_array = ""
-  RET
-    valid
-    failure
-BEGIN
-  valid = 1
-  SPRINT failure ""
-  PHP_EACH "%offset_array%" AS start_offset => count_offset BEGIN
-    READ_LONG  start_offset start
-    READ_SHORT count_offset count
-    PATCH_IF start < header_length BEGIN
-      valid = 0
-      SPRINT failure "offset too low"
-      LPF fl#valid#chat
-        STR_VAR
-          m = "WARNING: spell buffer has structure-start offset pointing into header"
-      END
-    END
-    PATCH_IF start > BUFFER_LENGTH BEGIN
-      valid = 0
-      SPRINT failure "offset too high"
-      LPF fl#valid#chat
-        STR_VAR
-          m = "WARNING: spell buffer has structure-start offset pointing outside file length"
-      END
-    END
-  END
-END
-
 DEFINE_PATCH_FUNCTION fl#valid#spl#offsets
   STR_VAR
     version = ""
@@ -1142,11 +1490,12 @@ BEGIN
   PATCH_MATCH "%version%" WITH
     "%fl#valid#spl#v1%"
     BEGIN
-      LPF fl#valid#spl#offsets#check
+      LPF fl#valid#offsets
         INT_VAR
           header_length = fl#valid#spl#v1#header_length
         STR_VAR
           offset_array = fl#valid#spl#offsets
+          buffer_type = spell
         RET
           valid
           failure
@@ -1155,11 +1504,12 @@ BEGIN
 
     "%fl#valid#spl#v20%"
     BEGIN
-      LPF fl#valid#spl#offsets#check
+      LPF fl#valid#offsets
         INT_VAR
           header_length = fl#valid#spl#v20#header_length
         STR_VAR
           offset_array = fl#valid#spl#offsets
+          buffer_type = spell
         RET
           valid
           failure
@@ -1211,24 +1561,13 @@ BEGIN
     DEFAULT
       size = 0
   END
-  PATCH_IF size > BUFFER_LENGTH BEGIN
-    valid = 0
-    SPRINT failure "fewer bytes"
-    LPF fl#valid#chat
-      STR_VAR
-        m = "WARNING: spell buffer has fewer bytes than expected"
-    END
-  END
-  PATCH_IF size < BUFFER_LENGTH BEGIN
-    valid = 0
-    SPRINT failure "more bytes"
-    LPF fl#valid#chat
-      STR_VAR
-        m = "WARNING: spell buffer has more bytes than expected"
-    END
-  END
-  PATCH_IF size = BUFFER_LENGTH BEGIN
-    valid = 1
-    SPRINT failure ""
+  LPF fl#valid#structure#size_check
+    INT_VAR
+      size
+    STR_VAR
+      buffer_type = spell
+    RET
+      valid
+      failure
   END
 END

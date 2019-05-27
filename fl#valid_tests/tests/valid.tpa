@@ -1,3 +1,6 @@
+PRINT "Testing known good AREA structures"
+INCLUDE ~%MOD_FOLDER%/tests/valid/are.tpa~
+
 PRINT "Testing known good CRE structures"
 INCLUDE ~%MOD_FOLDER%/tests/valid/cre.tpa~
 

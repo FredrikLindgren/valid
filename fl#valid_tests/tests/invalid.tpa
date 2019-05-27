@@ -1,3 +1,6 @@
+PRINT "Testing known bad AREA structures"
+INCLUDE ~%MOD_FOLDER%/tests/invalid/are.tpa~
+
 PRINT "Testing known bad CRE structures"
 INCLUDE ~%MOD_FOLDER%/tests/invalid/cre.tpa~
 

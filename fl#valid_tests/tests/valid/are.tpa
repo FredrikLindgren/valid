@@ -1,0 +1,31 @@
+DEFINE_ACTION_FUNCTION fl#valid_tests#tests#valid#are
+  RET
+    success
+    fail
+    failed_validity_tests
+BEGIN
+  OUTER_SPRINT file_root "%MOD_FOLDER%/tests/valid/are"
+
+  ACTION_DEFINE_ASSOCIATIVE_ARRAY valid#are BEGIN
+    "arev10ni" => "Plain AREA V1.0 created by NI v2.1-20171222"
+    "arev10w" => "Plain AREA V1.0 created by WeiDU 246.00"
+    "arev91w" => "Plain AREA V9.1 created by WeiDU 246.00"
+    "ar0400" => "AREA V1.0 BG2; BG2 Fixpack core + beta v11b4"
+    "ar0100" => "AREA V1.0 PST; sourced from GOG version"
+    "ar1000" => "AREA V9.1 IWD2; sourced from GOG version"
+  END
+
+  ACTION_PHP_EACH valid#are AS file => desc BEGIN
+    LAF test_valid
+      STR_VAR
+        file = EVAL "%file_root%/%file%.are"
+        desc
+      RET
+        success
+        fail
+        failed_validity_tests
+    END
+  END
+END
+
+LAF fl#valid_tests#tests#valid#are RET success fail failed_validity_tests END
