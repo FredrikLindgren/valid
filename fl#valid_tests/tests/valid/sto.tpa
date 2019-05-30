@@ -1,0 +1,34 @@
+DEFINE_ACTION_FUNCTION fl#valid_tests#tests#valid#sto
+  RET
+    success
+    fail
+    failed_validity_tests
+BEGIN
+  OUTER_SPRINT file_root "%MOD_FOLDER%/tests/valid/sto"
+
+  ACTION_DEFINE_ASSOCIATIVE_ARRAY valid#sto BEGIN
+    "storv10ni" => "Plain STOR V1.0 created by NI v2.1-20171222"
+    "storv10w" => "Plain STOR V1.0 created by WeiDU 246.00"
+    "storv11w" => "Plain STOR V1.1 created by WeiDU 246.00"
+    "storv90w" => "Plain STOR V9.0 created by WeiDU 246.00"
+    "ehtemple" => "STOR V9.0 IWD:TOTLM Temple of Tempus: buys, sells and cures"
+    "10gohar" => "STOR V9.0 IWD2 The Salty Dog: drinks"
+    "emoric" => "STOR V1.1 PST Dustmen Vault: buys, sells and cures"
+    "erdane" => "STOR V1.0 BG:TOTSC Erdane: buys, sells and drinks"
+    "tem0131" => "STOR V1.0 BG:TOTSC High Hall of Wonders: buys, sells and cures"
+  END
+
+  ACTION_PHP_EACH valid#sto AS file => desc BEGIN
+    LAF test_valid
+      STR_VAR
+        file = EVAL "%file_root%/%file%.sto"
+        desc
+      RET
+        success
+        fail
+        failed_validity_tests
+    END
+  END
+END
+
+LAF fl#valid_tests#tests#valid#sto RET success fail failed_validity_tests END

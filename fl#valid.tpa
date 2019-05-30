@@ -43,6 +43,8 @@ BEGIN
 
     "SPL " BEGIN LPF fl#valid#spl RET valid failure END END
 
+    "STOR" BEGIN LPF fl#valid#sto RET valid failure END END
+
     "%fl#null%"
     BEGIN
       valid = 0
@@ -1584,6 +1586,265 @@ BEGIN
       size
     STR_VAR
       buffer_type = spell
+    RET
+      valid
+      failure
+  END
+END
+
+
+/*********************************************************************
+ * STO
+ ********************************************************************/
+
+/*
+ * Determines if the current buffer is a valid store.
+ * Return boolean valid
+ */
+DEFINE_PATCH_FUNCTION fl#valid#sto
+  RET
+    valid
+    failure
+BEGIN
+  LPF fl#valid#sto#signature RET valid version failure END
+  PATCH_FOR_EACH check IN
+                 fl#valid#sto#size
+                 fl#valid#sto#offsets
+                 fl#valid#sto#structure#size
+  BEGIN
+    PATCH_IF valid BEGIN
+      LPF "%check%" STR_VAR version RET valid failure END
+    END
+  END
+END
+
+OUTER_SPRINT fl#valid#sto#v10 "V1.0"
+OUTER_SPRINT fl#valid#sto#v11 "V1.1"
+OUTER_SPRINT fl#valid#sto#v90 "V9.0"
+
+OUTER_SET fl#valid#sto#v10#header_length = 0x9c
+OUTER_SET fl#valid#sto#v11#header_length = 0x9c
+OUTER_SET fl#valid#sto#v90#header_length = 0xf0
+
+ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid#sto#v10#offsets BEGIN
+  0x2c => 0x30
+  0x34 => 0x38
+  0x4c => 0x50
+  0x70 => 0x74
+END
+
+ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid#sto#v11#offsets BEGIN
+  0x2c => 0x30
+  0x34 => 0x38
+  0x4c => 0x50
+  0x70 => 0x74
+END
+
+ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid#sto#v90#offsets BEGIN
+  0x2c => 0x30
+  0x34 => 0x38
+  0x4c => 0x50
+  0x70 => 0x74
+END
+
+ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid#sto#v10#lengths BEGIN
+  0, 0x30 => 0x4
+  0, 0x38 => 0x1c
+  0, 0x50 => 0x14
+  0, 0x74 => 0xc
+END
+
+ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid#sto#v11#lengths BEGIN
+  0, 0x30 => 0x4
+  0, 0x38 => 0x58
+  0, 0x50 => 0x14
+  0, 0x74 => 0xc
+END
+
+ACTION_DEFINE_ASSOCIATIVE_ARRAY fl#valid#sto#v90#lengths BEGIN
+  0 ,0x30 => 0x4
+  0 ,0x38 => 0x1c
+  0 ,0x50 => 0x14
+  0 ,0x74 => 0xc
+END
+
+DEFINE_PATCH_FUNCTION fl#valid#sto#signature
+  RET
+    valid
+    version
+    failure
+BEGIN
+  SPRINT failure ""
+  LPF fl#valid#signature RET signature version END
+  PATCH_IF "%signature%" STR_CMP "STOR" OR
+           !("%version%" STRING_EQUAL "%fl#valid#sto#v10%" OR
+             "%version%" STRING_EQUAL "%fl#valid#sto#v11%" OR
+             "%version%" STRING_EQUAL "%fl#valid#sto#v90%")
+  BEGIN
+    valid = 0
+    SPRINT failure "signature"
+    LPF fl#valid#chat
+      STR_VAR
+        m = "WARNING: expected store buffer does not have a valid signature"
+    END
+  END ELSE valid = 1
+END
+
+DEFINE_PATCH_FUNCTION fl#valid#sto#size
+  STR_VAR
+    version = ""
+  RET
+    valid
+    failure
+BEGIN
+  PATCH_MATCH "%version%" WITH
+    "%fl#valid#sto#v10%" WHEN BUFFER_LENGTH < fl#valid#sto#v10#header_length
+    BEGIN
+      valid = 0
+      SPRINT failure "minimum size"
+      LPF fl#valid#chat
+        STR_VAR
+          m = "WARNING: store buffer is less than required minimum size"
+      END
+    END
+
+    "%fl#valid#sto#v11%" WHEN BUFFER_LENGTH < fl#valid#sto#v11#header_length
+    BEGIN
+      valid = 0
+      SPRINT failure "minimum size"
+      LPF fl#valid#chat
+        STR_VAR
+          m = "WARNING: store buffer is less than required minimum size"
+      END
+    END
+
+    "%fl#valid#sto#v90%" WHEN BUFFER_LENGTH < fl#valid#sto#v90#header_length
+    BEGIN
+      valid = 0
+      SPRINT failure "minimum size"
+      LPF fl#valid#chat
+        STR_VAR
+          m = "WARNING: store buffer is less than required minimumm size"
+      END
+    END
+
+    DEFAULT
+      valid = 1
+      SPRINT failure ""
+  END
+END
+
+DEFINE_PATCH_FUNCTION fl#valid#sto#offsets
+  STR_VAR
+    version = ""
+  RET
+    valid
+    failure
+BEGIN
+  PATCH_MATCH "%version%" WITH
+    "%fl#valid#sto#v10%"
+    BEGIN
+      LPF fl#valid#offsets
+        INT_VAR
+          header_length = fl#valid#sto#v10#header_length
+          always_read_length = 4
+        STR_VAR
+          offset_array = fl#valid#sto#v10#offsets
+          buffer_type = store
+        RET
+          valid
+          failure
+      END
+    END
+
+    "%fl#valid#sto#v11%"
+    BEGIN
+      LPF fl#valid#offsets
+        INT_VAR
+          header_length = fl#valid#sto#v11#header_length
+          always_read_length = 4
+        STR_VAR
+          offset_array = fl#valid#sto#v11#offsets
+          buffer_type = store
+      END
+    END
+
+    "%fl#valid#sto#v90%"
+    BEGIN
+      LPF fl#valid#offsets
+        INT_VAR
+          header_length = fl#valid#sto#v90#header_length
+          always_read_length = 4
+        STR_VAR
+          offset_array = fl#valid#sto#v90#offsets
+          buffer_type = store
+      END
+    END
+
+    DEFAULT
+      valid = 0
+      SPRINT failure "framework error: unmatched version %version%"
+  END
+END
+
+DEFINE_PATCH_FUNCTION fl#valid#sto#structure#size
+  STR_VAR
+    version = ""
+  RET
+    valid
+    failure
+BEGIN
+  PATCH_MATCH "%version%" WITH
+    "%fl#valid#sto#v10%"
+    BEGIN
+      LPF fl#valid#structure#sum
+        INT_VAR
+          size = fl#valid#sto#v10#header_length
+          always_read_length = 4
+        STR_VAR
+          offset_array = fl#valid#sto#v10#offsets
+          size_array = fl#valid#sto#v10#lengths
+        RET
+          size
+      END
+    END
+
+    "%fl#valid#sto#v11%"
+    BEGIN
+      LPF fl#valid#structure#sum
+        INT_VAR
+          size = fl#valid#sto#v11#header_length
+          always_read_length = 4
+        STR_VAR
+          offset_array = fl#valid#sto#v11#offsets
+          size_array = fl#valid#sto#v11#lengths
+        RET
+          size
+      END
+    END
+
+    "%fl#valid#sto#v90%"
+    BEGIN
+      LPF fl#valid#structure#sum
+        INT_VAR
+          size = fl#valid#sto#v90#header_length
+          always_read_length = 4
+        STR_VAR
+          offset_array = fl#valid#sto#v90#offsets
+          size_array = fl#valid#sto#v90#lengths
+        RET
+          size
+      END
+    END
+
+    DEFAULT
+      size = 0
+  END
+  LPF fl#valid#structure#size_check
+    INT_VAR
+      size
+    STR_VAR
+      buffer_type = store
     RET
       valid
       failure

@@ -9,3 +9,6 @@ INCLUDE ~%MOD_FOLDER%/tests/invalid/itm.tpa~
 
 PRINT "Testing known bad SPL structures"
 INCLUDE ~%MOD_FOLDER%/tests/invalid/spl.tpa~
+
+PRINT "Testing known bad STOR structures"
+INCLUDE ~%MOD_FOLDER%/tests/invalid/sto.tpa~

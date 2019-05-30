@@ -1,0 +1,34 @@
+DEFINE_ACTION_FUNCTION fl#valid_tests#tests#invalid#sto
+  RET
+    success
+    fail
+    failed_invalidity_tests
+BEGIN
+  OUTER_SPRINT file_root "%MOD_FOLDER%/tests/invalid/sto"
+
+  ACTION_DEFINE_ASSOCIATIVE_ARRAY invalid#sto BEGIN
+    "nosig", "signature" => "Plain STOR V1.0 with erased signature"
+    "nover", "signature" => "Plain STOR V1.0 with erased version"
+    "dmghd", "minimum size" => "Plain STOR V1.0 with 0x20 bytes deleted at offset 0x10"
+    "wrngoff", "offset too low" => "Plain STOR V1.0 with 0x1c bytes deducted from offset 0x2c"
+    "wrngoff2", "offset too high" => "Plain STOR V1.0 with 0x1c bytes added to offset 0x2c"
+    "erdane", "more bytes" => "Erdane with 1 deducted off offset 0x30"
+    "tem0131", "fewer bytes" => "High Hall of Wonders with 0x4 bytes deleted from value at offset 0x30"
+    //"25spell", "offset points into another structure" => BG2 Fixpack v11b4 Arcana Archives"
+  END
+
+  ACTION_PHP_EACH invalid#sto AS key => desc BEGIN
+    LAF test_invalid
+      STR_VAR
+        file = EVAL "%file_root%/%key_0%.sto"
+        fail_mode = EVAL "%key_1%"
+        desc
+      RET
+        success
+        fail
+        failed_invalidity_tests
+    END
+  END
+END
+
+LAF fl#valid_tests#tests#invalid#sto RET success fail failed_invalidity_tests END
