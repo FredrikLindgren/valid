@@ -114,8 +114,10 @@ OUTER_SET fl#valid#eff#v2#header_length = 0x108
 DEFINE_PATCH_FUNCTION fl#valid#offsets
   INT_VAR
     header_length = 0
+    always_read_length = "-1"
   STR_VAR
     offset_array = ""
+    read_length_array = ""
     whitelist_null_array = ""
     buffer_type = ""
   RET
@@ -124,8 +126,14 @@ DEFINE_PATCH_FUNCTION fl#valid#offsets
 BEGIN
   valid = 1
   SPRINT failure ""
-  PHP_EACH "%offset_array%" AS start_offset => _ BEGIN
-    READ_LONG  start_offset start
+  PHP_EACH "%offset_array%" AS start_offset => count_offset BEGIN
+    read_length = always_read_length > 0 ? always_read_length :
+                  $EVAL "%read_length_array%"(0 "%start_offset%")
+    PATCH_IF read_length = 4 BEGIN
+      READ_LONG  start_offset start
+    END ELSE BEGIN
+      READ_SHORT start_offset start
+    END
     PATCH_IF start < header_length &&
              !VARIABLE_IS_SET $EVAL "%whitelist_null_array%"("%start_offset%")
     BEGIN
@@ -549,7 +557,7 @@ BEGIN
           header_length = fl#valid#are#v10#header_length
         STR_VAR
           offset_array = fl#valid#are#v10#offsets
-          // FIXME: read_lengths; one is a word
+          read_length_array = fl#valid#are#v10#read_lengths
           whitelist_null_array = fl#valid#are#v10#offsets#whitelist_null
           buffer_type = area
         RET
@@ -569,6 +577,7 @@ BEGIN
           header_length = fl#valid#are#v91#header_length
         STR_VAR
           offset_array = fl#valid#are#v91#offsets
+          read_length_array = fl#valid#are#v91#read_lengths
           whitelist_null_array = fl#valid#are#v91#offsets#whitelist_null
           buffer_type = area
         RET
@@ -995,6 +1004,7 @@ BEGIN
       LPF fl#valid#offsets
         INT_VAR
           header_length = fl#valid#cre#v10#header_length
+          always_read_length = 4
         STR_VAR
           offset_array = fl#valid#cre#v10#offsets
           buffer_type = creature
@@ -1012,6 +1022,7 @@ BEGIN
       LPF fl#valid#offsets
         INT_VAR
           header_length = fl#valid#cre#v12#header_length
+          always_read_length = 4
         STR_VAR
           offset_array = fl#valid#cre#v12#offsets
           buffer_type = creature
@@ -1028,6 +1039,7 @@ BEGIN
       LPF fl#valid#offsets
         INT_VAR
           header_length = fl#valid#cre#v22#header_length
+          always_read_length = 4
         STR_VAR
           offset_array = fl#valid#cre#v22#offsets
           buffer_type = creature
@@ -1045,6 +1057,7 @@ BEGIN
       LPF fl#valid#offsets
         INT_VAR
           header_length = fl#valid#cre#v90#header_length
+          always_read_length = 4
         STR_VAR
           offset_array = fl#valid#cre#v90#offsets
           buffer_type = creature
@@ -1266,6 +1279,7 @@ BEGIN
       LPF fl#valid#offsets
         INT_VAR
           header_length = fl#valid#itm#v1#header_length
+          always_read_length = 4
         STR_VAR
           offset_array = fl#valid#itm#offsets
           buffer_type = item
@@ -1280,6 +1294,7 @@ BEGIN
       LPF fl#valid#offsets
         INT_VAR
           header_length = fl#valid#itm#v11#header_length
+          always_read_length = 4
         STR_VAR
           offset_array = fl#valid#itm#offsets
           buffer_type = item
@@ -1294,6 +1309,7 @@ BEGIN
       LPF fl#valid#offsets
         INT_VAR
           header_length = fl#valid#itm#v20#header_length
+          always_read_length = 4
         STR_VAR
           offset_array = fl#valid#itm#offsets
           buffer_type = item
@@ -1493,6 +1509,7 @@ BEGIN
       LPF fl#valid#offsets
         INT_VAR
           header_length = fl#valid#spl#v1#header_length
+          always_read_length = 4
         STR_VAR
           offset_array = fl#valid#spl#offsets
           buffer_type = spell
@@ -1507,6 +1524,7 @@ BEGIN
       LPF fl#valid#offsets
         INT_VAR
           header_length = fl#valid#spl#v20#header_length
+          always_read_length = 4
         STR_VAR
           offset_array = fl#valid#spl#offsets
           buffer_type = spell
