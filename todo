@@ -1,0 +1,13 @@
+structure order/offsets
+offsets that point into another structure
+offsets that point outside the file structure
+indexed structures
+
+BG1/BGEE has offset 0xc0 at 0 if there are no rest encounters;
+in which case there is no corresponding structure; problem
+for both minimum-size check and offsets check
+
+AR2600 BGEE has explored bitmap
+
+BG2EE OH7300.are fails the size test with 4 bytes more than expected;
+NI says it's ok
